@@ -1,0 +1,54 @@
+<script type="text/javascript">
+    RED.nodes.registerType('soap request', {
+        category: "function",
+        icon: "white-globe.png",
+        color: "#a6bbcf",
+        inputs: 1,
+        outputs: 1,
+        defaults: {
+            name: { value: "" },
+            topic: { value: "" },
+            wsdl: {value: "", type: "soap-config"},
+            method: {value: "", required: true}
+        },
+        label: function () {
+            return this.name || "SOAP"
+        }
+    });
+</script>
+
+<script type="text/x-red" data-template-name="soap request">
+    <div class="form-row">
+        <label for="node-input-wsdl"><i class="fa fa-globe"></i> WSDL</label>
+        <input type="text" id="node-input-wsdl" placeholder="WSDL">
+    </div>
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+        <label for="node-input-topic"><i class="icon-tasks"></i> Topic</label>
+        <input type="text" id="node-input-topic" placeholder="Topic">
+    </div>
+    <div class="form-row">
+        <label for="node-input-method"><i class="icon-tag"></i> Method</label>
+        <input type="text" id="node-input-method" placeholder="Method">
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="soap request">
+    <p>Node-red nodes that allow users to send SOAP request.</p>
+    <p>To set up SOAP request, create a new soap config </p>
+
+    <p>In the SOAP request config tab, enter the valid method name in *Method* field. Having an invalid method name will return error.</p>
+    <p>You can also feed in parameters and overwrite configs with an injected msg: </p>
+    <p>
+        <ul>
+            <li>You can have <b>msg.server</b> to overwrite the WSDL address. This only works with WSDL server with no authentication method.</li>
+            <li>You can have <b>msg.options</b> to add in options to the SOAP request.</li>
+            <li>You can have <b>msg.headers</b> to add in headers for the SOAP request.</li>
+            <li>You can feed in <b>msg.payload.&lt;parameters&gt;</b> to feed in the parameters you need.</li>
+
+        </ul>
+    </P>
+</script>
