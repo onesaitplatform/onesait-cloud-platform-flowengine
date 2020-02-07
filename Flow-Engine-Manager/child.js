@@ -2,7 +2,6 @@ var http = require('http');
 var express = require("express");
 var RED = require("node-red-onesait-platform");
 
-
 // Create an Express app
 var app = express();
 
@@ -26,6 +25,9 @@ var servicePort = process.env.servicePort;
 	    flowFile:home+"/flows_"+domain+".json",
 	    servicePortOnesaitPlatform : servicePort,
 	    functionGlobalContext: { }   , 
+        // Timeout in milliseconds for HTTP request connections
+        httpRequestTimeout: 10000,
+        socketTimeout: 22000,
 	    // enables global context
 	    editorTheme: {
 	        page: {
@@ -43,8 +45,72 @@ var servicePort = process.env.servicePort;
 	        projects: {
 	            // To enable the Projects feature, set this value to true
 	            enabled: false
-	        }
-	    }
+	        }, 
+	        userMenu: false
+	    },
+	    adminAuth: require("./node_modules/node-red-onesait-platform/user-authentication")/*,
+	    httpNodeMiddleware:  async function(req,res,next) {
+		    // Perform any processing on the request.
+		    // Be sure to call next() if the request should be passed
+		    // to the relevant HTTP In node.
+		   const checkAuth = (opts) => {
+		    	return new Promise((resolve, reject) => {
+									http.get(opts, (response) => {
+										let chunks_of_data = [];
+										response.on('data', (fragments) => {
+											chunks_of_data.push(fragments);
+										});
+
+										response.on('end', () => {
+											let response_body = Buffer.concat(chunks_of_data);
+											resolve(200);
+										});
+
+										response.on('error', (error) => {
+											reject(401);
+										});
+									});
+								});
+		    };
+		    
+		
+		    //if (typeof req.headers['X-OP-NODEKey'] != "undefined" && req.headers['X-OP-NODEKey'] != null) {
+		    if (typeof req.headers['x-op-nodekey'] != "undefined" && req.headers['x-op-nodekey'] != null) {
+		    	
+		    	var opts = {};
+		    	opts.hostname = "localhost";
+		    	opts.port = 5050;
+	            opts.path = domain+"/settings";
+	            //opts.timeout = node.reqTimeout;
+	            opts.method = "GET";
+	            opts.headers = {"Authentication":req.headers['x-op-nodekey']};
+	            opts.encoding = null;
+
+		    	try{
+
+					console.log("DELETEME --------- PRE");
+					//const response_body = await checkAuth(opts);
+					var val = checkAuth(opts).then(function(ret){console.log("DELETEME --------- "+ret);return next();}).catch((e)=>{		console.log("DELETEME --------- ERROR "+e);})
+					// holds response from server that is passed when Promise is resolved
+					
+					
+					console.log("DELETEME --------- POST"+val);
+					//return next();
+		    	} catch(e){
+		    		console.debug("--- AUTH Middleware --- Exception: "+e);
+		    		res.status(401).send('unauthorized');
+		    	}
+
+		    } else {
+		    	console.debug("--- AUTH Middleware --- no header");
+		    	res.status(401).send('unauthorized');
+		    }
+
+		   //res.status(401).send('unauthorized');
+		}*/
+	    
+
+
 	};
 
 
@@ -62,6 +128,8 @@ app.use(settings.httpAdminRoot,RED.httpAdmin);
 
 // Serve the http nodes UI from /api
 app.use(settings.httpNodeRoot,RED.httpNode);
+
+
 
 
 

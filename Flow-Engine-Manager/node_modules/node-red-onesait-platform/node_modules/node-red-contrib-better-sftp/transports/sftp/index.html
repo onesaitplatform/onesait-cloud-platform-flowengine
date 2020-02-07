@@ -1,0 +1,290 @@
+<script type="text/x-red" data-template-name="sftp in">
+  <div class="form-row">
+      <label for="node-input-name" style="width: 120px;"  ><i class="icon-tag"></i> Name</label>
+      <input type="text" id="node-input-name" style="width: calc(100% - 170px);"  placeholder="Name">
+  </div>
+  <div class="form-row">
+    <label for="node-input-sftp" style="width: 120px;"  ><i class="fa fa-server"></i> SFTP Server</label>
+    <input type="text" id="node-input-sftp" >
+  </div>
+  <div class="form-row">
+    <label for="node-input-operation"  style="width: 120px;" ><i class="fa fa-wrench"></i> Operation</label>
+    <select type="text" id="node-input-operation" style="width: calc(100% - 170px);"  >
+      <option value="list">List Directory</option>
+      <option value="get">Get</option>
+      <option value="put">Put</option>
+      <option value="delete">Delete File</option>
+      <option value="mkdir">Make Directory</option>
+      <option value="rmdir">Remove Directory</option>
+    </select>
+  </div>
+  <div class="form-row input-workdir-row">
+    <label for="node-input-workdir" style="width: 120px;"  ><i class="fa fa-folder-open"></i> Working Directory</label>
+    <input type="text" id="node-input-workdir" style="width: calc(100% - 170px);"  placeholder="Working Directory">
+  </div>
+  <div class="form-row input-filename-row hidden">
+    <label for="node-input-filename" style="width: 120px;"  ><i class="fa fa-file"></i> Filename</label>
+    <input type="text" id="node-input-filename" style="width: calc(100% - 170px);" placeholder="Filename">
+  </div>
+  <div class="form-row input-localFilename-row hidden">
+    <label for="node-input-localFilename" style="width: 120px;"  ><i class="fa fa-file"></i> Local Filename</label>
+    <input type="text" id="node-input-localFilename" style="width: calc(100% - 170px);" placeholder="Local Filename">
+  </div>
+<!--  <div class="form-tips"><b>Tip:</b> This is here to help.</div>-->
+</script>
+
+<script type="text/x-red" data-help-name="sftp in">
+   <p>SFTP incoming node. Used to read information from SFTP server</p>
+   <h3>Outputs</h3>
+       <dl class="message-properties">
+       <dt>payload
+           <span class="property-type">string | buffer</span>
+       </dt>
+   <h3>Details</h3>
+   <p><b>List</b>: Listing directory contents returns an array of files found.</p>
+   <p><b>Get</b>: Gets a file from SFTP server and returns a buffer. Use file-in node to write buffer to file</p>
+   <p><b>Put</b>: Writes a file to SFTP server in specified working directory. <code>msg.payload</code> can contain a location to the file, buffer stream, or single buffer object.</p>
+   <p><b>Delete</b>: Deletes a file from the SFTP directory. File name is required.</p>
+   <p><b>Make Directory</b>: Creates a directory on the SFTP server by the working directory.</p>
+   <p><b>Remove Directory</b>: Removes a directory and all sub directories on the SFTP server by the working directory.</p>
+</script>
+
+<script type="text/javascript">
+  RED.nodes.registerType('sftp in', {
+    category: 'storage-input',
+    color: "#AAAA66",
+    defaults: {
+      name: { value: '' },
+      sftp: { type: 'sftp', required: true },
+      operation: { value: 'list', required: true },
+      filename: { value: '' },
+      localFilename: { value: '' },
+      workdir: { value: '' }
+    },
+    inputs: 1,
+    outputs: 1,
+    icon: "file-in.png",
+    label: function () {
+      return this.name || 'sftp';
+    },
+    labelStyle: function () {
+      return this.name ? 'node_label_italic' : '';
+    },
+    oneditprepare: function () {
+      let filename = $(".input-filename-row");
+      let localFilename = $(".input-localFilename-row");
+      let workdir = $(".input-workdir-row");
+      $("#node-input-operation").change(function () {
+        let id = $("#node-input-operation option:selected").val();
+
+        switch (id) {
+          case 'list':
+            workdir.show();
+            filename.hide();
+            localFilename.hide();
+            break;
+          case 'get':
+          case 'put':
+            filename.show();
+            workdir.show();
+            localFilename.hide();
+            break;
+          case 'delete':
+            filename.show();
+            workdir.show();
+            localFilename.hide();
+            break;
+          case 'mkdir':
+          case 'rmdir':
+            workdir.show();
+            filename.hide();
+            localFilename.hide();
+            break;
+          default:
+            filename.show();
+            localFilename.hide();
+            break;
+        }
+      });
+    }
+  });
+</script>
+
+<script type="text/x-red" data-template-name="sftp">
+  <div class="form-row">
+    <label for="node-config-input-host" style="width: 120px;" ><i class="fa fa-bookmark"></i> Host</label>
+    <input type="text" id="node-config-input-host" placeholder="localhost" style="width: calc(100% - 310px);" />
+    <label for="node-config-input-port" style="margin-left: 10px; width: 45px; "> Port</label>
+    <input type="text" id="node-config-input-port" placeholder="22" style="width:75px">
+  </div>
+  <div class="form-row">
+    <label for="node-config-input-username" style="width: 120px;" ><i class="fa fa-user"></i> Username</label>
+    <input type="text" style="width: calc(100% - 170px);" id="node-config-input-username">
+  </div>
+  <div class="form-row" id="node-config-row-password" >
+    <label for="node-config-input-password" style="width: 120px;" ><i class="fa fa-key"></i> Password</label>
+    <input type="password" style="width: calc(100% - 170px);" id="node-config-input-password">
+  </div>
+  <div class="form-row" id="node-config-row-tryKeyboard">
+    <input type="checkbox" id="node-config-input-tryKeyboard" style="display: inline-block; width: auto; vertical-align: top; margin-left: 20px;">
+    <label for="node-config-input-tryKeyboard" > Try keyboard-interactive with password</label>
+  </div>
+  <div class="form-row">
+    <label><i class="fa fa-file-text-o"></i> Private key</label>
+  </div>
+  <div class="form-row" id="node-config-row-uselocalfiles">
+    <input type="checkbox" id="node-config-input-uselocalfiles" style="display: inline-block; width: auto; vertical-align: top;margin-left: 20px;">
+    <label for="node-config-input-uselocalfiles" > Use local files</label>
+  </div>
+  <div class="form-row" id="node-config-row-key" >
+      <label style="width: 100px; margin-left: 20px;" ><i class="fa fa-file-text-o"></i> File</label>
+      <span class="sftp-config-input-data">
+          <label class="red-ui-button" for="node-config-input-keyfile"><i class="fa fa-upload"></i> Upload</label>
+          <input class="hide" type="file" id="node-config-input-keyfile">
+          <span id="sftp-config-keyname" style="width: calc(100% - 280px); overflow: hidden; line-height:34px; height:34px; text-overflow: ellipsis; white-space: nowrap; display: inline-block; vertical-align: middle;"> </span>
+          <button class="red-ui-button red-ui-button-small" id="sftp-config-button-key-clear" style="margin-left: 10px"><i class="fa fa-times"></i></button>
+      </span>
+      <input type="hidden" id="node-config-input-keyname">
+      <input type="hidden" id="node-config-input-keydata">
+      <input class="hide sftp-config-input-path" style="width: calc(100% - 170px);" type="text" id="node-config-input-key" >
+  </div>
+  <div class="form-row" id="node-config-row-passphrase">
+    <label style="width: 100px; margin-left: 20px;" for="node-config-input-passphrase"><i class="fa fa-key"></i> Passphrase</label>
+    <input type="password" style="width: calc(100% - 170px);" id="node-config-input-passphrase" >
+  </div>
+  <div class="form-row">
+    <label><i class="fa fa-lock"></i> Algorithms</label>
+  </div>
+  <div class="form-row">
+    <label for="node-config-input-algorithms_kex" style="width: 100px; margin-left: 20px;" > Kex</label>
+    <input type="text" id="node-config-input-algorithms_kex" style="width: calc(100% - 170px);" >
+  </div>
+  <div class="form-row">
+    <label for="node-config-input-algorithms_cipher" style="width: 100px; margin-left: 20px;" > Cipher</label>
+    <input type="text" id="node-config-input-algorithms_cipher" style="width: calc(100% - 170px);" >
+  </div>
+  <div class="form-row">
+    <label for="node-config-input-algorithms_serverHostKey" style="width: 100px; margin-left: 20px;" > ServerHostKey</label>
+    <input type="text" id="node-config-input-algorithms_serverHostKey" style="width: calc(100% - 170px);" >
+  </div>
+  <div class="form-row">
+    <label for="node-config-input-algorithms_hmac" style="width: 100px; margin-left: 20px;" > HMAC</label>
+    <input type="text" id="node-config-input-algorithms_hmac" style="width: calc(100% - 170px);" >
+  </div>
+  <div class="form-row">
+    <label for="node-config-input-algorithms_compress" style="width: 100px; margin-left: 20px;" > Compress</label>
+    <input type="text" id="node-config-input-algorithms_compress" style="width: calc(100% - 170px);" >
+  </div>
+</script>
+
+<script type="text/javascript">
+  (function () {
+    RED.nodes.registerType('sftp', {
+      category: 'config',
+      defaults: {
+        host: { value: 'localhost', required: true },
+        port: { value: '22', required: true, validate: RED.validators.number() },
+        tryKeyboard: { value: false },
+        key: { value: "" },
+        keyname: { value: "" },
+        algorithms_kex: { value: 'ecdh-sha2-nistp256,ecdh-sha2-nistp384,ecdh-sha2-nistp521,diffie-hellman-group-exchange-sha256,diffie-hellman-group14-sha1', required: true },
+        algorithms_cipher: { value: 'aes128-ctr,aes192-ctr,aes256-ctr,aes128-gcm,aes128-gcm@openssh.com,aes256-gcm,aes256-gcm@openssh.com', required: true },
+        algorithms_serverHostKey: { value: 'ssh-rsa,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521', required: true },
+        algorithms_hmac: { value: 'hmac-sha2-256,hmac-sha2-512,hmac-sha1', required: true },
+        algorithms_compress: { value: 'none,zlib@openssh.com,zlib', required: true }
+      },
+      credentials: {
+        username: { type: "text" },
+        password: { type: "password" },
+        keydata: { type: "text" },
+        passphrase: { type: "password" }
+      },
+      exportable: false,
+      label: function () {
+        return this.host || ''
+      },
+      labelStyle: function () {
+        return this.host ? "node_label_italic" : "";
+      },
+      oneditprepare: function () {
+        function updateFileUpload() {
+          if ($("#node-config-input-uselocalfiles").is(':checked')) {
+            $(".sftp-config-input-path").show();
+            $(".sftp-config-input-data").hide();
+          } else {
+            $(".sftp-config-input-data").show();
+            $(".sftp-config-input-path").hide();
+          }
+        }
+        $("#node-config-input-uselocalfiles").on("click", function () {
+          updateFileUpload();
+        });
+
+        function saveFile(property, file) {
+          var dataInputId = "#node-config-input-" + property + "data";
+          var filenameInputId = "#node-config-input-" + property + "name";
+          var filename = file.name;
+          var reader = new FileReader();
+          reader.onload = function (event) {
+            $("#sftp-config-" + property + "name").text(filename);
+            $(filenameInputId).val(filename);
+            $(dataInputId).val(event.target.result);
+          }
+          reader.readAsText(file, "UTF-8");
+        }
+        $("#node-config-input-keyfile").on("change", function () {
+          saveFile("key", this.files[0]);
+        });
+
+        function clearNameData(prop) {
+          $("#sftp-config-" + prop + "name").text("");
+          $("#node-config-input-" + prop + "data").val("");
+          $("#node-config-input-" + prop + "name").val("");
+        }
+        $("#sftp-config-button-key-clear").on("click", function () {
+          clearNameData("key");
+        });
+
+        // in case paths were set from old SFTP config
+        if(this.key || this.keyname) {
+          // $("#node-config-input-usekey").prop('checked', true);
+          if(this.key){
+            $("#node-config-input-uselocalfiles").prop('checked', true);
+          } else {
+            $("#sftp-config-keyname").text(this.keyname);
+          }
+        }
+
+        if(this.password){
+          $("#node-config-input-usepassword").prop('checked', true);
+        }
+
+        updateFileUpload();
+      },
+      oneditsave: function () {
+        function clearNameData(prop) {
+          $("#sftp-config-" + prop + "name").text("");
+          $("#node-config-input-" + prop + "data").val("");
+          $("#node-config-input-" + prop + "name").val("");
+        }
+        if ($("#node-config-input-uselocalfiles").is(':checked')) {
+          clearNameData("key");
+        } else {
+          $("#node-config-input-key").val("");
+        }
+
+        let trimFields = [
+          "username",
+          "password"
+        ];
+
+        // Just in case any whitespace has crept in with the copy-paste of the fields
+        trimFields.forEach(function (field) {
+          var v = $("#node-config-input-" + field).val();
+          v = v.trim();
+          $("#node-config-input-" + field).val(v);
+        });
+      }
+    });
+  })();
+</script>
