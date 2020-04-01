@@ -1,4 +1,4 @@
-var authServiceUrl='https://flowengineservice:20100/flowengine/node/services/user/validate';
+var authServiceUrl='http://flowengineservice:20100/flowengine/node/services/user/validate';
 
 
 var http = require('http');
