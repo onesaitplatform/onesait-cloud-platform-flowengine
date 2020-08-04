@@ -214,24 +214,61 @@ function recoverDomain() {
 
 function stats(pid, listAllDomain, i) {
     return new Promise((resolve, reject) => {
-        
-		if(pid==null){
-              resolve(listAllDomain[i]);
-        }
-		pusage.stat(pid, (err, data) => {
-            if (err) {
-                return reject(err)
+        try{
+    		if(pid==null){
+                  resolve(listAllDomain[i]);
             }
+    		pusage.stat(pid, (err, data) => {
+                if (err) {
+                    reject(err)
+                }
+                try{
+                    listAllDomain[i].memory = data.memory;
+                    listAllDomain[i].cpu = data.cpu;
+                    resolve(listAllDomain[i])
+                }catch(e){
+                    console.log("Node-Red Manager. app.js-->REST Method: status(). STOP ChildProcess_PID: " + pid);
+                    deleteDomainData(pid, listAllDomain[i].domain);
+                     reject(e);
+                }
 
-            listAllDomain[i].memory = data.memory;
-            listAllDomain[i].cpu = data.cpu;
-            resolve(listAllDomain[i])
 
-
-        })
+            })
+        }catch(e){
+            console.log("Node-Red Manager. app.js-->REST Method: status(). STOP ChildProcess_PID: " + pid);
+            deleteDomainData(pid, listAllDomain[i].domain);
+             reject(e);
+        }
     })
 }
 
+function deleteDomainData(pid, queryDomain){
+    delete usersPorts[queryDomain];
+    //Enviamos seÃ±al de stop al proceso
+    console.log("Node-Red Manager. app.js-->REST Method: stopDomainMF(). STOP ChildProcess_PID: " + pid);
+    try{
+        childProcess.send({
+            msg: 'stop'
+        });
+        pusage.unmonitor(listChildsRed[queryDomain].pid);
+    }catch(e){
+
+    console.log("Node-Red Manager. app.js-->REST Method: stopDomainMF(). ALREADY STOPPED ChildProcess_PID: " + pid);
+    }
+    
+     try{
+        delete listChildsRed[queryDomain];
+        
+
+        //Obtenemos la linea a actualizar
+        var line = getLineFileDomain(queryDomain);
+        line = line.replace("START", "STOP");
+        //Actualizamos el fichero de estados con la nueva situaciÃ³n.
+        updateFileDomainsStart(domains_START, queryDomain, line);
+    }catch(e){
+         console.log("Node-Red Manager. app.js-->REST Method: stopDomainMF(). ALREADY STOPPED ChildProcess_PID: " + e);
+    }
+}
 
 /*
  * Obtiene la lista final del dominio con todos sus datos. 
@@ -255,8 +292,11 @@ function showListAllDomain(listAllDomain) {
                 var pid = null;
 
             }
-
+            console.log("Node-Red Manager. app.js-->showListAllDomain() - CHECKING DOMAIN "+listAllDomain[i].domain);
+    
            stats(pid, listAllDomain, i).then((data) => {
+                console.log("Node-Red Manager. app.js-->showListAllDomain() - CHECKING DOMAIN "+i+" - "+pid);
+    
                 listDataFlow[indexDataFlow]=data;
                 indexDataFlow++;
            
@@ -265,7 +305,7 @@ function showListAllDomain(listAllDomain) {
         }
 		
 		
-		waitUntil(500, 8, function condition() {
+		waitUntil(1500, 8, function condition() {
 			return (indexDataFlow>=listAllDomain.length ? true : false);
 		}, function done(result) {
 			resolve(listDataFlow); 
@@ -608,19 +648,23 @@ app.post('/startDomainMF', function(req, res) {
 	var childProcess = listChildsRed[domain];
 
     if (childProcess != null && childProcess != undefined) {
-		console.log("Node-Red Manager. app.js-->REST Method: startDomainMF(). Domain is started. Restarts domain")
+        try{
+    		console.log("Node-Red Manager. app.js-->REST Method: startDomainMF(). Domain is started. Restarts domain")
 
-        //Enviamos seÃ±al de stop al proceso
-        console.log("STOP ChildProcess_PID: " + childProcess.pid);
-        childProcess.send({
-            msg: 'stop'
-        });
+            //Enviamos seÃ±al de stop al proceso
+            console.log("STOP ChildProcess_PID: " + childProcess.pid);
+            childProcess.send({
+                msg: 'stop'
+            });
 
-        //Obtenemos la linea a actualizar
-        var line = getLineFileDomain(domain);
-        line = line.replace("START", "STOP");
-        //Actualizamos el fichero de estados con la nueva situaciÃ³n.
-        updateFileDomainsStart(domains_START, domain, line);
+            //Obtenemos la linea a actualizar
+            var line = getLineFileDomain(domain);
+            line = line.replace("START", "STOP");
+            //Actualizamos el fichero de estados con la nueva situaciÃ³n.
+            updateFileDomainsStart(domains_START, domain, line);
+        } catch(e){
+            console.log("Node-Red Manager. app.js-->REST Method: startDomainMF(). Domain was not running")
+        }
     }
 	
 	
@@ -658,7 +702,6 @@ app.post('/startDomainMF', function(req, res) {
 		listChildsRed[nameChild].on('uncaughtException', function (err) {
 			console.log("Node-Red Manager. app.js-->REST Method: startDomainMF(). Error ejecutantdo Script de proceso hijo")
 		});
-		
 		
 		//Asignamos el puerto para el dominio del  proxy. 
 		//Lo metemeos aqui, ya que tenemos garantias de que el puerto ya estÃ¡ levantado y asÃ­ el proxy no le redirecciona

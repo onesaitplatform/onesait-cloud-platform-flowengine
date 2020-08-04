@@ -1,4 +1,4 @@
-var authServiceUrl='http://localhost:20100/flowengine/node/services/user/validate';
+var authServiceUrl='http://flowengineservice:20100/flowengine/node/services/user/validate';
 
 
 var http = require('http');
@@ -27,6 +27,7 @@ function serverProxy(_proxyPort, usersPorts) {
 
 		var pathArray = req.url.split('/');
         var domain = pathArray[1];
+
 
         if (pathArray.length == 2) { //llega solo la raiz que debaria traer autenticacion
             domainArray = pathArray[1].split('?authentication='); //[ 'proyecto02', 'authentication=1:Sm4r7P14tf0rm!' ]
@@ -65,9 +66,9 @@ function serverProxy(_proxyPort, usersPorts) {
                 return;
             }
         } else if (pathArray.length > 2) {
-            if (pathArray[pathArray.length-1].startsWith('?authentication=')) {
+            if (pathArray[2].startsWith('?authentication=')) {
 
-                var authentication = pathArray[pathArray.length-1].split('?authentication=')[1];
+                var authentication = pathArray[2].split('?authentication=')[1];
                 var domain = pathArray[1];
 
                 var user = domain + '-' + authentication;
