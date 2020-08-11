@@ -28,8 +28,8 @@ var servicePort = process.env.servicePort;
 	    servicePortOnesaitPlatform : servicePort,
 	    functionGlobalContext: { }   , 
         // Timeout in milliseconds for HTTP request connections
-        httpRequestTimeout: 10000,
-        socketTimeout: 22000,
+        httpRequestTimeout: ${HTTPREQUESTTIMEOUT},
+        socketTimeout: ${SOCKETTIMEOUT},
         httpStatic: "/opt/nodeRed/Flow-Engine-Manager/public/",
         nodesDir: "/opt/nodeRed/Flow-Engine-Manager/onesait-platform/nodes/",
 	    // enables global context
@@ -60,26 +60,6 @@ var servicePort = process.env.servicePort;
 		    // Perform any processing on the request.
 		    // Be sure to call next() if the request should be passed
 		    // to the relevant HTTP In node.
-		   const checkAuth = (opts) => {
-		    	return new Promise((resolve, reject) => {
-									http.get(opts, (response) => {
-										let chunks_of_data = [];
-										response.on('data', (fragments) => {
-											chunks_of_data.push(fragments);
-										});
-
-										response.on('end', () => {
-											let response_body = Buffer.concat(chunks_of_data);
-											resolve(200);
-										});
-
-										response.on('error', (error) => {
-											reject(401);
-										});
-									});
-								});
-		    };
-		    
 		
 		    //if (typeof req.headers['X-OP-NODEKey'] != "undefined" && req.headers['X-OP-NODEKey'] != null) {
 		    if (typeof req.headers['x-op-nodekey'] != "undefined" && req.headers['x-op-nodekey'] != null) {
@@ -94,15 +74,31 @@ var servicePort = process.env.servicePort;
 	            opts.encoding = null;
 
 		    	try{
+			    	
+					var response_body = await async function () {
+							return new Promise((resolve, reject) => {
+									http.get(opts, (response) => {
+										let chunks_of_data = [];
 
-					console.log("DELETEME --------- PRE");
-					//const response_body = await checkAuth(opts);
-					var val = checkAuth(opts).then(function(ret){console.log("DELETEME --------- "+ret);return next();}).catch((e)=>{		console.log("DELETEME --------- ERROR "+e);})
+										response.on('data', (fragments) => {
+											chunks_of_data.push(fragments);
+										});
+
+										response.on('end', () => {
+											let response_body = Buffer.concat(chunks_of_data);
+											resolve(response_body.toString());
+										});
+
+										response.on('error', (error) => {
+											reject(error);
+										});
+									});
+								});
+						};
+
 					// holds response from server that is passed when Promise is resolved
-					
-					
-					console.log("DELETEME --------- POST"+val);
-					//return next();
+
+					return next();
 		    	} catch(e){
 		    		console.debug("--- AUTH Middleware --- Exception: "+e);
 		    		res.status(401).send('unauthorized');
@@ -110,10 +106,9 @@ var servicePort = process.env.servicePort;
 
 		    } else {
 		    	console.debug("--- AUTH Middleware --- no header");
-		    	res.status(401).send('unauthorized');
 		    }
 
-		   //res.status(401).send('unauthorized');
+		   res.status(401).send('unauthorized');
 		}*/
 	    
 
@@ -265,8 +260,4 @@ function comunicationProcess(input) {
 
 process.on('message', function(m) {
 	comunicationProcess(m);
-});
-
-process.on('SIGINT',function(){
-    process.exit(0);    
 });
