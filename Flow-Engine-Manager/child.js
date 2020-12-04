@@ -1,7 +1,9 @@
 var http = require('http');
 var express = require("express");
-var RED = require("node-red-onesait-platform");
-
+var RED = require("node-red");
+var pusage = require('pidusage');
+var process = require('process');
+var cp = require('child_process');
 // Create an Express app
 var app = express();
 
@@ -26,20 +28,24 @@ var servicePort = process.env.servicePort;
 	    servicePortOnesaitPlatform : servicePort,
 	    functionGlobalContext: { }   , 
         // Timeout in milliseconds for HTTP request connections
-        httpRequestTimeout: 10000,
-        socketTimeout: 22000,
+        httpRequestTimeout: ${HTTPREQUESTTIMEOUT},
+        socketTimeout: ${SOCKETTIMEOUT},
+        httpStatic: "/opt/nodeRed/Flow-Engine-Manager/public/",
+        nodesDir: "/opt/nodeRed/Flow-Engine-Manager/onesait-platform/nodes/",
 	    // enables global context
 	    editorTheme: {
 	        page: {
 	            title: "OnesaitPlatform FlowEngine",
-	            css: "/opt/nodeRed/Flow-Engine-Manager/node_modules/node-red-onesait-platform/public/red/onesait.platform.custom.css",
-	            favicon: "/opt/nodeRed/Flow-Engine-Manager/node_modules/node-red-onesait-platform/public/red/icons/platform_logo.png" //can use '__dirname + "\\img\\favicon.png" (\\ on Windows)'
-	            //scripts: "/absolute/path/to/custom/js/file"  // As of 0.17
+                    //css: "/opt/nodeRed/Flow-Engine-Manager/node_modules/node-red-onesait-platform/public/red/onesait.platform.custom.css",
+                css: "/opt/nodeRed/Flow-Engine-Manager/onesait-platform/css/onesait.platform.custom.css",
+                favicon: "/opt/nodeRed/Flow-Engine-Manager/onesait-platform/nodes/icons/platform_logo.png"
+	            //favicon: "/opt/nodeRed/Flow-Engine-Manager/node_modules/node-red-onesait-platform/public/red/icons/platform_logo.png" //can use '__dirname + "\\img\\favicon.png" (\\ on Windows)'
 	        },
 	        header: {
 	            title: "OnesaitPlatform FlowEngine",
 	            //image: "/opt/nodeRed/Flow-Engine-Manager/node_modules/node-red-onesait-platform/public/icons/platform_logo.png", // or null to remove image
-	            image: "",
+	            //image: "/home/rtvachet/noderedVersions/node_modules/node-red-onesait-platform/@node-red/editor-client/public/red/images/icons/platform_logo.png",
+                image:null,
 	            url: "http://nodered.org" // optional url to make the header text/image a link to this url
 	        },
 	        projects: {
@@ -48,31 +54,12 @@ var servicePort = process.env.servicePort;
 	        }, 
 	        userMenu: false
 	    },
-	    adminAuth: require("./node_modules/node-red-onesait-platform/user-authentication")/*,
+	    adminAuth: require("./node_modules/node-red/user-authentication")
+        /*,
 	    httpNodeMiddleware:  async function(req,res,next) {
 		    // Perform any processing on the request.
 		    // Be sure to call next() if the request should be passed
 		    // to the relevant HTTP In node.
-		   const checkAuth = (opts) => {
-		    	return new Promise((resolve, reject) => {
-									http.get(opts, (response) => {
-										let chunks_of_data = [];
-										response.on('data', (fragments) => {
-											chunks_of_data.push(fragments);
-										});
-
-										response.on('end', () => {
-											let response_body = Buffer.concat(chunks_of_data);
-											resolve(200);
-										});
-
-										response.on('error', (error) => {
-											reject(401);
-										});
-									});
-								});
-		    };
-		    
 		
 		    //if (typeof req.headers['X-OP-NODEKey'] != "undefined" && req.headers['X-OP-NODEKey'] != null) {
 		    if (typeof req.headers['x-op-nodekey'] != "undefined" && req.headers['x-op-nodekey'] != null) {
@@ -87,15 +74,31 @@ var servicePort = process.env.servicePort;
 	            opts.encoding = null;
 
 		    	try{
+			    	
+					var response_body = await async function () {
+							return new Promise((resolve, reject) => {
+									http.get(opts, (response) => {
+										let chunks_of_data = [];
 
-					console.log("DELETEME --------- PRE");
-					//const response_body = await checkAuth(opts);
-					var val = checkAuth(opts).then(function(ret){console.log("DELETEME --------- "+ret);return next();}).catch((e)=>{		console.log("DELETEME --------- ERROR "+e);})
+										response.on('data', (fragments) => {
+											chunks_of_data.push(fragments);
+										});
+
+										response.on('end', () => {
+											let response_body = Buffer.concat(chunks_of_data);
+											resolve(response_body.toString());
+										});
+
+										response.on('error', (error) => {
+											reject(error);
+										});
+									});
+								});
+						};
+
 					// holds response from server that is passed when Promise is resolved
-					
-					
-					console.log("DELETEME --------- POST"+val);
-					//return next();
+
+					return next();
 		    	} catch(e){
 		    		console.debug("--- AUTH Middleware --- Exception: "+e);
 		    		res.status(401).send('unauthorized');
@@ -103,16 +106,83 @@ var servicePort = process.env.servicePort;
 
 		    } else {
 		    	console.debug("--- AUTH Middleware --- no header");
-		    	res.status(401).send('unauthorized');
 		    }
 
-		   //res.status(401).send('unauthorized');
+		   res.status(401).send('unauthorized');
 		}*/
 	    
 
 
 	};
 
+function stats(pid) {
+    return new Promise((resolve, reject) => {
+        try{
+    		if(pid==null){
+                  resolve({});
+            }
+    		pusage.stat(pid, (err, data) => {
+                if (err) {
+                    reject(err)
+                }
+                try{
+                    resolve(data)
+                }catch(e){
+                    console.log("Node-Red Manager. app.js-->REST Method: status(). No status for PID " + pid);
+                     reject(e);
+                }
+
+
+            })
+        }catch(e){
+            console.log("Node-Red Manager. app.js-->REST Method: status().  ChildProcess_PID: " + pid);
+             reject(e);
+        }
+    })
+}
+
+function socketCount(pid){
+    
+    
+    
+    return new Promise((resolve, reject) => {
+        try{
+    		if(pid==null){
+                  resolve({});
+            }
+    		cp.exec('lsof -i -P |grep '+pid, function (err, data) {
+                if(err)
+                    resolve({});
+                var sockertInfo = data.split('\n');
+                sockertInfo.pop(); //last one is always empty
+                resolve( sockertInfo);
+            });
+        }catch(e){
+            console.log("Node-Red Manager. app.js-->REST Method: status().  ChildProcess_PID: " + pid);
+             reject(e);
+        }
+    })
+}
+    
+//Healthcheck endoint
+app.get('/'+domain+'/health', function (req, res) {
+    
+    try{
+        stats(process.pid).then(function(data) {
+			console.log("Node-Red Manager. app.js-->REST Method: getAllDomainMF(). Respuesta:"+JSON.stringify(data));
+            var domainStats = data;
+            socketCount(process.pid).then(function(data3){
+                domainStats.sockets = data3;
+                
+            res.send(JSON.stringify(domainStats)); 
+                
+            })
+        })   
+     }catch(err){
+        console.log("Node-Red Manager. app.js-->REST Method: getAllDomainMF(). Error",err);
+        res.send(err);
+     }
+})
 
 
 // Create a server
@@ -128,7 +198,6 @@ app.use(settings.httpAdminRoot,RED.httpAdmin);
 
 // Serve the http nodes UI from /api
 app.use(settings.httpNodeRoot,RED.httpNode);
-
 
 
 

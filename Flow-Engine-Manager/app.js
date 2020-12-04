@@ -19,6 +19,7 @@ var util = require("util");
 var pusage = require('pidusage');
 var promise = require('promise');
 var waitUntil = require('wait-until');
+var cp = require('child_process');
 
 
 
@@ -225,6 +226,9 @@ function stats(pid, listAllDomain, i) {
                 try{
                     listAllDomain[i].memory = data.memory;
                     listAllDomain[i].cpu = data.cpu;
+                    socketCount(pid).then(function(data3){
+                         listAllDomain[i].sockets = data3;
+                    });
                     resolve(listAllDomain[i])
                 }catch(e){
                     console.log("Node-Red Manager. app.js-->REST Method: status(). STOP ChildProcess_PID: " + pid);
@@ -285,18 +289,14 @@ function showListAllDomain(listAllDomain) {
 		var indexDataFlow=0;
 		
         for (var i = 0; i < listAllDomain.length; i++) {
+            var pid = null;
             if (listAllDomain[i].state == 'START') {
-                var pid = listChildsRed[listAllDomain[i].domain].pid;
-
-            } else {
-                var pid = null;
+                pid = listChildsRed[listAllDomain[i].domain].pid;
 
             }
-            console.log("Node-Red Manager. app.js-->showListAllDomain() - CHECKING DOMAIN "+listAllDomain[i].domain);
-    
+            
            stats(pid, listAllDomain, i).then((data) => {
-                console.log("Node-Red Manager. app.js-->showListAllDomain() - CHECKING DOMAIN "+i+" - "+pid);
-    
+  
                 listDataFlow[indexDataFlow]=data;
                 indexDataFlow++;
            
@@ -313,6 +313,30 @@ function showListAllDomain(listAllDomain) {
 	})
 
 
+}
+
+
+function socketCount(pid2){
+    
+    
+    
+    return new Promise((resolve, reject) => {
+        try{
+            if(pid2==null){
+                  resolve([]);
+            }
+            cp.exec('lsof -i -P |grep '+pid2, function (err, data) {
+                if(err)
+                    resolve([]);
+                var sockertInfo = data.split('\n');
+                sockertInfo.pop(); //last one is always empty
+                resolve( sockertInfo);
+            });
+        }catch(e){
+            console.log("Node-Red Manager. app.js-->REST Method: socketCount().  ChildProcess_PID: " + pid2);
+             reject(e);
+        }
+    })
 }
 
 
