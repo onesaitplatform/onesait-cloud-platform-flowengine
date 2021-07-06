@@ -12,7 +12,7 @@
     <p><code>REST APIs available</code>  Selection of the Rest API availables in the platform. The selection will be saved in the fields <code>REST API</code> and <code>REST API Version</code></p>
     <p><code>Operations available</code>  List of operations from the selected Rest API. The selection will be saved in the fields <code>REST API Operation</code> and <code>Operation Method</code></p>
     <p><code>Timeout(millis)</code> Max. time (in milliseconds) that will be waited until the call is aborted.</p>
-    <p><code>Operation input params</code> List of params (query, path, body, headers or multipart) required by the Rest API operation. For each one, a value must be assigned. It can be a value from a field of the incoming message (msg.) or a fixed value (string). If one of the params is a file, it MUST be a field from an incomming message. The structure of the field must be as follows: <code>msg.file = {
+    <p><code>Operation input params</code> List of params (query, path, body, headers or multipart) required by the Rest API operation. For each one, a value must be assigned when the parameter is required (marked with '*'). It can be a value from a field of the incoming message (msg.) or a fixed value (string). If the param is not required, it won't be sent if "Do not send" option is selected or if the field filled (msg. option) equals to "undefined" or is not set. If one of the params is a file, it MUST be a field from an incomming message. The structure of the field must be as follows: <code>msg.file = {
     'fileName':'my-file.jpg',
     'file':databuffer
 };</code> where "databuffer" is a buffer contaning the file data.</p>
@@ -43,7 +43,7 @@
             operationInputs: {value:[],validate:function(v){
                 var validationRes = true;
                 v.forEach(function(element){
-                    if(element.value == "") validationRes = false;
+                    if(element.required==true && element.value == "") validationRes = false;
                 });
                 return validationRes;
             }},
@@ -69,8 +69,7 @@
         oneditprepare: function() {
             $("#node-input-operationInputs-container").css('min-height','250px').css('min-width','450px').editableList({
                 addItem: function(container,i,opt) {
-
-                     if (!opt.hasOwnProperty('r')) {
+                    if (!opt.hasOwnProperty('r')) {
                         opt.r = {};
                     }
                     var opInput = opt.r;
@@ -83,18 +82,31 @@
                     if (!opInput.hasOwnProperty('type')) {
                         opInput.type='msg';
                     }
+                    if (!opInput.hasOwnProperty('required')) {
+                        opInput.required=true;
+                    }
 
                     container.css({
                         overflow: 'hidden',
                         whiteSpace: 'nowrap'
                     });
+
+                    var optionalType = {
+                        value: "DoNotSend",
+                        label: "Do not send",
+                        hasValue: false
+                      };
+
                     var row = $('<div/>').appendTo(container);
                     var row2 = $('<div/>',{style:"padding-top: 5px; padding-left: 175px;"}).appendTo(container);
                     var row3 = $('<div/>',{style:"padding-top: 5px; padding-left: 102px;"}).appendTo(container);
-
-                    var label = $('<label/>',{class:"node-input-rule-case",style:"margin-left: 3px;"}).text(opInput.param).appendTo(row);
-                    var valueField = $('<input/>',{class:"node-input-rule-value",type:"text",style:"margin-left: 5px;"}).appendTo(row).typedInput({default:opInput.type,types:['msg','str']}).typedInput('value',opInput.value);
-
+                    if(opInput.required) {
+                        var label = $('<label/>',{class:"node-input-rule-case",style:"margin-left: 3px;"}).text(opInput.param+'*').appendTo(row);
+                        var valueField = $('<input/>',{class:"node-input-rule-value",type:"text",style:"margin-left: 5px;"}).appendTo(row).typedInput({default:opInput.type,types:['msg','str']}).typedInput('value',opInput.value);
+                    } else {
+                        var label = $('<label/>',{class:"node-input-rule-case",style:"margin-left: 3px;"}).text(opInput.param).appendTo(row);
+                        var valueField = $('<input/>',{class:"node-input-rule-value",type:"text",style:"margin-left: 5px;"}).appendTo(row).typedInput({default:opInput.type,types:['msg','str',optionalType]}).typedInput('value',opInput.value);
+                    }
                 },
                 removeItem: function(opt) {},
                 sortItems: function(rules){},
@@ -102,7 +114,6 @@
                 removable: false,
                 addButton: false
             });
-
             for (var i=0;i<this.operationInputs.length;i++) {
                 var opInput = this.operationInputs[i];
                 $("#node-input-operationInputs-container").editableList('addItem',{r:opInput,i:i});
@@ -124,6 +135,10 @@
                 opInput.param = label;
                 opInput.value = v ; //msg[v]
                 opInput.type = vt;
+                opInput.required = label.endsWith("*");
+                if(opInput.required){
+                    opInput.param = label.substring(0,label.length-1);
+                }
                 node.operationInputs.push(opInput);
             });
 
@@ -153,6 +168,27 @@
     var restApiOperationNamesList;
     var insertedInList = false;
     
+    function onElementInserted(containerSelector, elementSelector, callback) {
+
+        var onMutationsObserved = function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.addedNodes.length) {
+                    var elements = $(mutation.addedNodes).find(elementSelector);
+                    for (var i = 0, len = elements.length; i < len; i++) {
+                        callback(elements[i]);
+                    }
+                }
+            });
+        };
+
+        var target = $(containerSelector)[0];
+        var config = { childList: true, subtree: true };
+        var MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
+        var observer = new MutationObserver(onMutationsObserved);    
+        observer.observe(target, config);
+
+  }
+  
     function getParameterByName(name, url) {
         if (!url) {
           url = window.location.href;
@@ -218,15 +254,19 @@
                             opInput={};
                             opInput.param=opsLoaded[i].params[params[key]].name;
                             opInput.value="";
+                            opInput.required=opsLoaded[i].params[params[key]].required;
                             //if that param existed in previous list, load it's value
                             prevLoadedParams.forEach(function(v) {
-                                var operInput = {};
+                              
                                 if(v.param == opInput.param){
                                     opInput.value = v.value;
                                     opInput.type = v.type;
+                                   // opInput.required = v.required;
                                 }
                             });
+                            
                             $("#node-input-operationInputs-container").editableList('addItem',{r:opInput,i:i});
+                            
                         }
                     }
                     break;

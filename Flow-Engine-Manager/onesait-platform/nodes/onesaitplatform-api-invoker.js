@@ -50,9 +50,14 @@ module.exports = function(RED) {
             inputs.forEach(function(element){
                 var paramValue = {};
                 paramValue.name = element.param;
+                var skipParam = false;
                 if(element.type == "str"){
                     //the given value as a string
                     paramValue.value = element.value;
+                } else if(element.type =='DoNotSend'){
+                    //Do nothing with the param
+                    skipParam = true;
+                    console.log("Discarded operation param as is optional and was marked as 'DoNotSend'. API: "+restApiName+" - V"+restApiVersion+" Operation: "+restApiOperationName+"Param: "+element.value);
                 } else {
                     // the value comes from the previous message
                     //replace array brakets for just the number
@@ -68,14 +73,19 @@ module.exports = function(RED) {
                             // obj is a valid variable, do something here.
                             finalValue = finalValue[fieldComposition[i]];
                         } else {
-                            var errorMsg = "msg."+element.value+" does not exist in message. Please check '"+paramValue.name+"' input param definition.";
-                            node.error(errorMsg);
-                            node.status({fill:"red", shape:"ring", text:"Please check '"+paramValue.name+"' input param definition."});
-                            errorOnValueRetrieval=true;
-                            msg.payload={error:true, msg:errorMsg};
-                            msgToSend[outputs -1 ] = msg;
-                            node.send(msgToSend);
-                            break;
+                            if(element.required){
+                                var errorMsg = "msg."+element.value+" does not exist in message. Please check '"+paramValue.name+"' input param definition.";
+                                node.error(errorMsg);
+                                node.status({fill:"red", shape:"ring", text:"Please check '"+paramValue.name+"' input param definition."});
+                                errorOnValueRetrieval=true;
+                                msg.payload={error:true, msg:errorMsg};
+                                msgToSend[outputs -1 ] = msg;
+                                node.send(msgToSend);
+                                break;
+                            } else {
+                                skipParam = true;
+                                console.log("Discarded operation param as is optional and 'undefined' value was assigned. API: "+restApiName+" - V"+restApiVersion+" Operation: "+restApiOperationName+"Param: "+element.value);
+                            }
                         }
                     }
                     if(typeof finalValue != 'string'){
@@ -84,7 +94,9 @@ module.exports = function(RED) {
                         paramValue.value = finalValue;
                     }
                 }
-                inputParamValues.push(paramValue);
+                if(!skipParam){
+                    inputParamValues.push(paramValue);
+                }
             });
             //Do not continue if param values are wrong
             if(errorOnValueRetrieval) return;

@@ -14,7 +14,10 @@ module.exports = function(RED) {
         this.resetCheckingOnIncomingMsg = n.resetCheckingOnIncomingMsg;
         this.interval_id = null;
         this.cronjob = null;
+        this.timeout_interval=null;
         this.dataflowStatusToCheck = n.dataflowStatusToCheck;
+        this.timeout = n.timeout*1000;
+        this.setTimeout = n.setTimeout;
          if (node.repeat > 2147483) {
             node.error(RED._("inject.errors.toolong", this));
             delete node.repeat;
@@ -44,6 +47,18 @@ module.exports = function(RED) {
           } else {
             this.status({fill:"yellow",shape:"ring",text:"Waiting for incoming msg to check status."});
           }
+          if(this.setTimeout){
+            this.timeout_interval=setInterval(function() {
+                node.stopScheduledStatusCheck();
+                if(n.resetCheckingOnIncomingMsg){
+                                node.status({fill:"green",shape:"ring",text:"Timeout exceeded. Send new msg to schedule status check on status: "+n.dataflowStatusToCheck});
+                            } else {
+                                node.status({fill:"green",shape:"ring",text:"Timeout exceeded. Re-deploy to start new loop."});
+                            }
+                  //output msg
+                  node.emit("processTimeout", msg); 
+            }, this.timeout);
+          }
         };
 
         if(!this.resetCheckingOnIncomingMsg){
@@ -51,7 +66,19 @@ module.exports = function(RED) {
         } else {
             this.status({fill:"yellow",shape:"ring",text:"Waiting for incoming msg to schedule status check on status: "+this.dataflowStatusToCheck});
         }
-
+        this.on('processTimeout',function(msg){
+            var statusArray = [];
+                if(!Array.isArray(n.dataflowStatusToCheck)){
+                    statusArray.push(n.dataflowStatusToCheck);
+                }else{
+                    statusArray = n.dataflowStatusToCheck;
+                }
+                var msgArray=[]
+                console.log("DELETEMEEEEEEEE ----- Length:"+n.dataflowStatusToCheck);
+                msgArray.length = statusArray.length + 1;
+                msgArray[statusArray.length]=msg;
+                node.send(msgArray);
+        });
         this.on('checkStatus',function(msg){
 
             var targetDataflowIdentification = dataflowIdentification;
@@ -75,17 +102,34 @@ module.exports = function(RED) {
                 }
                 msg.payload=data;
                 if(n.repeat == "" && n.crontab == "" ){
+                    //Bypass MODE
                     node.send(msg);
-                } else if(data.status == n.dataflowStatusToCheck){
-                    if(n.stopAfterMatch){
-                        node.stopScheduledStatusCheck();
-                        if(n.resetCheckingOnIncomingMsg){
-                            node.status({fill:"green",shape:"ring",text:"Status found. Send new msg to schedule status check on status: "+n.dataflowStatusToCheck});
-                        } else {
-                            node.status({fill:"green",shape:"ring",text:"Status found. Re-deploy to start new loop."});
-                        }
+                } else{ 
+                    //Status check MODE
+                    var statusArray = [];
+                    if(!Array.isArray(n.dataflowStatusToCheck)){
+                        statusArray.push(n.dataflowStatusToCheck);
+                    }else{
+                        statusArray = n.dataflowStatusToCheck;
                     }
-                    node.send(msg);
+
+                    if(statusArray.includes( data.status)){
+                        var msgArray = []
+                        msgArray.length = statusArray.length ;
+                        if(n.setTimeout) {
+                            msgArray.length = statusArray.length + 1;
+                        }
+                        if(n.stopAfterMatch){
+                            node.stopScheduledStatusCheck();
+                            if(n.resetCheckingOnIncomingMsg){
+                                node.status({fill:"green",shape:"ring",text:"Status found. Send new msg to schedule status check on status: "+n.dataflowStatusToCheck});
+                            } else {
+                                node.status({fill:"green",shape:"ring",text:"Status found. Re-deploy to start new loop."});
+                            }
+                        }
+                        msgArray[statusArray.indexOf( data.status)]=msg;
+                        node.send(msgArray);
+                    }
                 }
             });
             req.on('requestTimeout', function (req) {
@@ -134,6 +178,9 @@ module.exports = function(RED) {
             this.cronjob.stop();
             if (RED.settings.verbose) { this.log(RED._("Dataflow automatic status check disabled")); }
             delete this.cronjob;
+        }
+        if(this.timeout_interval != null){
+             clearInterval(this.timeout_interval);
         }
     };
 

@@ -1,6 +1,5 @@
 var authServiceUrl='http://localhost:20100/flowengine/node/services/user/validate';
 
-
 var http = require('http');
 var url = require('url');
 var querystring = require('querystring');
@@ -12,6 +11,42 @@ var proxyPort
 var proxy;
 var pathArray;
 
+const GelfTransport = require('winston-gelf');
+var winston = require('winston')
+ 
+${COMMENT_GRAYLOG_START}
+  const options = {
+    gelfPro: {
+        fields: {app_name: "NodeRED", domain: "proxy-nodered.js"}, // optional; default fields for all messages
+        filter: [], // optional; filters to discard a message
+        transform: [], // optional; transformers for a message
+        broadcast: [], // optional; listeners of a message
+        levels: {trace:10, debug:20, info: 30, warn:40, error: 50, fatal:60}, // optional; default: see the levels section below
+        aliases: {}, // optional; default: see the aliases section below
+        adapterName: 'tcp', // optional; currently supported "udp", "tcp" and "tcp-tls"; default: udp
+        adapterOptions: { // this object is passed to the adapter.connect() method
+            // common
+            host: '${GRAYLOG_HOST}', // optional; default: 127.0.0.1
+            port: ${GRAYLOG_PORT}, // optional; default: 12201
+            // tcp adapter example
+            family: 4, // tcp only; optional; version of IP stack; default: 4
+            timeout: 1000 // tcp only; optional; default: 10000 (10 sec)     
+    }
+  }
+      
+}
+ 
+  const gelfTransport = new GelfTransport(options);
+${COMMENT_GRAYLOG_END}
+
+  const logger = winston.createLogger({
+    transports: [
+      new winston.transports.Console()
+      ${COMMENT_GRAYLOG_START}
+      , gelfTransport
+      ${COMMENT_GRAYLOG_END}
+    ]
+  });
 
 
 function serverProxy(_proxyPort, usersPorts) {
@@ -21,7 +56,7 @@ function serverProxy(_proxyPort, usersPorts) {
 
     proxy = httpProxy.createProxyServer({});
     proxy.on('error', (e) => {
-            console.log("Node-Red Manager. proxy-nodered.js. ERROR on proxyServer!  " + e );
+            logger.error("Node-Red Manager. proxy-nodered.js. ERROR on proxyServer!  " + e );
     });
 
     var serverProxy = http.createServer(function(req, res) {
@@ -49,11 +84,11 @@ function serverProxy(_proxyPort, usersPorts) {
                         }
                     });
 
-		   console.log("Respuesta servicio autenticacion: "+respuesta.statusCode);
+		   logger.info("Respuesta servicio autenticacion: "+respuesta.statusCode);
 
                     if (respuesta.statusCode == 200) {
                         cache.put('cachingUser', user, 1000, function(key, value) {
-                            //console.log(key + '->' + value);
+                            //logger.info(key + '->' + value);
                         });
                     }
                     
@@ -83,11 +118,11 @@ function serverProxy(_proxyPort, usersPorts) {
                         }
                     });
 
-		   console.log("Respuesta servicio autenticacion: "+respuesta.statusCode);
+		   logger.info("Respuesta servicio autenticacion: "+respuesta.statusCode);
 
                     if (respuesta.statusCode == 200) {
                         cache.put('cachingUser', user, 60000, function(key, value) {
-                            //console.log(key + '->' + value);
+                            //logger.info(key + '->' + value);
                         });
 
                     }
@@ -131,7 +166,7 @@ function serverProxy(_proxyPort, usersPorts) {
                 target: 'http://localhost:' + usersPorts[domain]
             });
         } else {
-            console.log("Node-Red Manager. proxy-nodered.js. Error, domain not found: "+domain);
+            logger.info("Node-Red Manager. proxy-nodered.js. Error, domain not found: "+domain);
             socket.end();
         }
 
@@ -139,7 +174,7 @@ function serverProxy(_proxyPort, usersPorts) {
 
     serverProxy.on('error', (e) => {
         if (e.code == 'EADDRINUSE') {
-            console.log("Node-Red Manager. proxy-nodered.js. WARNING! Port: " + proxyPort + " is in use, Cannot start proxy");
+            logger.error("Node-Red Manager. proxy-nodered.js. WARNING! Port: " + proxyPort + " is in use, Cannot start proxy");
             setTimeout(() => {
                 server.listen(proxyPort);
             }, 1000);

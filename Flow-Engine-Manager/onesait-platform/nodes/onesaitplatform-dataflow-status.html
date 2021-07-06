@@ -16,10 +16,24 @@
         crontab: {value:""},
         dataflowStatusToCheck:{value:""},
         stopAfterMatch:{value:true},
-        resetCheckingOnIncomingMsg:{value:true}
+        resetCheckingOnIncomingMsg:{value:true},
+        setTimeout:{value:true},
+        timeout:{value:60, validate:function(v){return (!($("#node-input-setTimeout").prop("checked"))||((v !== "") && (RED.validators.number(v) && (v >= 0) && (v <= 2147483)))) }},
+        outputs:{value:1}
       },
       inputs: 1,
-      outputs:1,
+      outputs: 1,
+        outputLabels: function(index) {
+            var selectedLabel = "";
+            if(Array.isArray(this.dataflowStatusToCheck)){
+                if(this.dataflowStatusToCheck.length === index){
+                    selectedLabel="TIMEOUT";
+                } else {
+                    selectedLabel=this.dataflowStatusToCheck[index];
+                }
+            } 
+            return selectedLabel;
+        },
       icon: "platform_logo.png",
       label: function() {
         return this.name||"Check Dataflow Status";
@@ -33,6 +47,22 @@
                 if(id != "none"){
                   $("#inject-time-row-wait-until").show();
                   $("#inject-time-stop-after-match").show();
+                  $("#inject-time-stop-after-match").change(function(){
+                    if ($("#node-input-stopAfterMatch").prop("checked")){
+                        $("#inject-time-setTimeout").show();
+                    } else {
+                        $("#inject-time-setTimeout").hide();
+                    }
+                  });
+                  $("#inject-time-setTimeout").show();
+                   $("#inject-time-setTimeout").change(function(){
+                    if ($("#node-input-setTimeout").prop("checked")){
+                        $("#inject-time-timeout").show();
+                    } else {
+                        $("#inject-time-timeout").hide();
+                    }
+                  });
+                  $("#inject-time-timeout").show();
                   $("#inject-time-reset-checking-on-incoming").show();
                 } else {
                     $("#node-input-resetCheckingOnIncomingMsg").prop("checked", false);
@@ -251,7 +281,12 @@
             $("#node-input-repeat").val(repeat);
             $("#node-input-crontab").val(crontab);
             this.dataflowStatusToCheck = $("#dataflow-satus-values").val();
+            this.outputs = 1;
+               if(Array.isArray(this.dataflowStatusToCheck)){
+                   this.outputs = this.dataflowStatusToCheck.length+1;
+               }
        }
+       
     });
 
   function showErrorDialogInsert() {
@@ -448,7 +483,7 @@
      <div class="form-row inject-time-row hidden" id="inject-time-row-wait-until">
         <span> Status:</span>
         <input type="hidden" name="dataflowStatusToCheck" value="">
-        <select style="width:166px" id="dataflow-satus-values">
+        <select multiple style="width:166px" id="dataflow-satus-values">
             <option value"EDITED"> EDITED </option>
             <option value"FINISHED"> FINISHED </option>
             <option value"RUN_ERROR"> RUN_ERROR </option>
@@ -476,6 +511,14 @@
     <div class="form-row inject-time-row hidden" id="inject-time-stop-after-match">
         <input type="checkbox" id="node-input-stopAfterMatch" style="display:inline-block; width:15px; vertical-align:baseline;">
         <span>Stop after first match.</span>&nbsp;
+    </div>
+    <div class="form-row inject-time-row hidden" id="inject-time-setTimeout">
+        <input type="checkbox" id="node-input-setTimeout" style="display:inline-block; width:15px; vertical-align:baseline;">
+        <span>Set timeout for the status to reach the selecction state.</span>&nbsp;
+    </div>
+    <div class="form-row inject-time-row" id="inject-time-timeout">
+      <label for="node-input-timeout"><i class="icon-file"></i> Timeout:</label>
+      <input type="number" id="node-input-timeout" placeholder="Timeout in seconds" min="1" step="1">
     </div>
 
 
@@ -595,10 +638,11 @@
     This is an optional field.</p>
     <p><code>Dataflow</code> Name of the dataflow to check. If the incoming message has the property <code>msg.dataflowIdentification</code> defined, its value will be used instead.</p>
     <p><code>Wait until status</code> Specifies if the node checks the status when a msg is received ("none" value) or in regular intervals according to a schedule.</p>
-    <p><code>Status</code> If scheduled, it will only generate an output if the dataflow status is the same as specified.</p>
+    <p><code>Status</code> If scheduled, it will only generate an output if the dataflow status is the same as specified. Multiple selections are allowed. Each selection adds an output to the node.</p>
     <p><code>Stop after first match</code> If checked, it will stop the scheduled process whenever the status received matches the specified status.</p>
+    <p><code>Set timeout for the status to reach the selecction state</code> If checked, it will stop the scheduled process if the desired states have not been reached in a certain amount of time.</p>
+    <p><code>Timeout</code> In secondes, it will stop the scheduled process if the desired states have not been reached in a that same amount of time.</p>
 
-    
     <h3>Details</h3>
     <p>The "Dataflow Status" node can initiate a dataflow status check within a specific planification or a single execution.</p>
     
