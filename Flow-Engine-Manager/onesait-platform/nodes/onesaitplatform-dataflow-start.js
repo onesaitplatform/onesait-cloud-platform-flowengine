@@ -32,7 +32,7 @@ module.exports = function(RED) {
             }
 
             var finalResetOrigin = resetOrigin;
-            if(typeof resetOrigin == 'undefined' || resetOrigin == '' || (typeof msg.resetOrigin != 'undefined' && msg.resetOrigin != '')){
+            if(typeof resetOrigin == 'undefined' || (typeof msg.resetOrigin == "boolean")){
                 finalResetOrigin = msg.resetOrigin;
             }
 

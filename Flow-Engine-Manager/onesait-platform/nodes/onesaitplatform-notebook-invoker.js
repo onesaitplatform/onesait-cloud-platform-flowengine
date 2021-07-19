@@ -184,6 +184,7 @@ module.exports = function(RED) {
 				node.warn("Triggers " + node.nTriggers + " of " + (totalTriggers));
 			}
 			if(!modeWorkflow || node.nTriggers>=totalTriggers){
+				node.data=[];
 				node.data.push(node.msgs);
 				node.nTriggers=0;
 				node.msgs=[];

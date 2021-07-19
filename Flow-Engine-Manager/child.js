@@ -1,3 +1,5 @@
+var dash = require('appmetrics-dash');
+//dash.attach();
 var http = require('http');
 var express = require("express");
 var RED = require("node-red");
@@ -11,6 +13,28 @@ var app = express();
 app.use("/",express.static("public"));
 
 
+// GELF configuration
+${COMMENT_GRAYLOG_START}
+var gelfLog = require('gelf-pro');
+gelfLog.setConfig({
+  fields: {app_name: "NodeRED", domain: domain}, // optional; default fields for all messages
+  filter: [], // optional; filters to discard a message
+  transform: [], // optional; transformers for a message
+  broadcast: [], // optional; listeners of a message
+  levels: {trace:10, debug:20, info: 30, warn:40, error: 50, fatal:60}, // optional; default: see the levels section below
+  aliases: {}, // optional; default: see the aliases section below
+  adapterName: 'tcp', // optional; currently supported "udp", "tcp" and "tcp-tls"; default: udp
+  adapterOptions: { // this object is passed to the adapter.connect() method
+    // common
+    host: '${GRAYLOG_HOST}', // optional; default: 127.0.0.1
+    port: ${GRAYLOG_PORT}, // optional; default: 12201
+    // tcp adapter example
+    family: 4, // tcp only; optional; version of IP stack; default: 4
+    timeout: 1000 // tcp only; optional; default: 10000 (10 sec)
+    
+  }
+});
+${COMMENT_GRAYLOG_END}
 
 // Create the settings object - see default settings.js file for other options
 
@@ -50,55 +74,31 @@ var servicePort = process.env.servicePort;
 	        },
 	        projects: {
 	            // To enable the Projects feature, set this value to true
-	            enabled: false
+	            enabled: true
 	        }, 
 	        userMenu: false
 	    },
 	    adminAuth: require("./node_modules/node-red/user-authentication")
-        /*,
+        ,
+        ${COMMENT_START}
 	    httpNodeMiddleware:  async function(req,res,next) {
 		    // Perform any processing on the request.
 		    // Be sure to call next() if the request should be passed
 		    // to the relevant HTTP In node.
-		
-		    //if (typeof req.headers['X-OP-NODEKey'] != "undefined" && req.headers['X-OP-NODEKey'] != null) {
+
 		    if (typeof req.headers['x-op-nodekey'] != "undefined" && req.headers['x-op-nodekey'] != null) {
 		    	
-		    	var opts = {};
+				var opts = {};
 		    	opts.hostname = "localhost";
 		    	opts.port = 5050;
-	            opts.path = domain+"/settings";
-	            //opts.timeout = node.reqTimeout;
+	            opts.path = "/"+domain+"/settings";
 	            opts.method = "GET";
-	            opts.headers = {"Authentication":req.headers['x-op-nodekey']};
+	            opts.headers = {'Authorization': 'Bearer '+req.headers['x-op-nodekey']};
 	            opts.encoding = null;
 
 		    	try{
-			    	
-					var response_body = await async function () {
-							return new Promise((resolve, reject) => {
-									http.get(opts, (response) => {
-										let chunks_of_data = [];
-
-										response.on('data', (fragments) => {
-											chunks_of_data.push(fragments);
-										});
-
-										response.on('end', () => {
-											let response_body = Buffer.concat(chunks_of_data);
-											resolve(response_body.toString());
-										});
-
-										response.on('error', (error) => {
-											reject(error);
-										});
-									});
-								});
-						};
-
-					// holds response from server that is passed when Promise is resolved
-
-					return next();
+					const response_body = await tokenValidation(opts);
+					next();
 		    	} catch(e){
 		    		console.debug("--- AUTH Middleware --- Exception: "+e);
 		    		res.status(401).send('unauthorized');
@@ -106,14 +106,94 @@ var servicePort = process.env.servicePort;
 
 		    } else {
 		    	console.debug("--- AUTH Middleware --- no header");
+		    	res.status(401).send('unauthorized');
 		    }
+		},
+        ${COMMENT_END}
+        ${COMMENT_GRAYLOG_START}
+	    logging: {
+            console: {
+                level: "info",
+                metrics: false,
+                audit: false
+            },
+             // Custom GELF logger
+            myCustomLogger: {
+                level: 'info',
+                audit: false,
+                metrics: false,
+                handler: function(settings) {
+                    // Called when the logger is initialised
 
-		   res.status(401).send('unauthorized');
-		}*/
-	    
-
-
+                    // Return the logging function
+                    return function(msg) {
+                        gelfLog.message(msg.msg,msg.level);
+                    }
+                }
+            }
+        }
+        ${COMMENT_GRAYLOG_END}
 	};
+
+
+function  tokenValidation(opts, postData) {
+    return new Promise(function(resolve, reject) {
+        var req = http.request(opts, function(res) {
+            // reject on bad status
+            if (res.statusCode < 200 || res.statusCode >= 300) {
+                return reject(new Error('statusCode=' + res.statusCode));
+            }
+            // cumulate data
+            var body = [];
+            res.on('data', function(chunk) {
+                body.push(chunk);
+            });
+            // resolve on end
+            res.on('end', function() {
+                try {
+                    body = JSON.parse(Buffer.concat(body).toString());
+                } catch(e) {
+                    reject(e);
+                }
+                resolve(body);
+            });
+        });
+        // reject on request error
+        req.on('error', function(err) {
+            // This is not a "Second reject", just a different sort of failure
+            reject(err);
+        });
+        if (postData) {
+            req.write(postData);
+        }
+        // IMPORTANT
+        req.end();
+    });
+}
+
+
+myMiddleware = async function auhtneticationMiddlewareFormetrics(req, res,next){
+	if(req.path == "/"+domain+"/appmetrics-dash/"){
+		if (typeof req.query['x-op-nodekey'] != "undefined" && req.query['x-op-nodekey'] != null) {
+			var opts = {};
+	    	opts.hostname = "localhost";
+	    	opts.port = 5050;
+            opts.path = "/"+domain+"/settings";
+            opts.method = "GET";
+            opts.headers = {'Authorization': 'Bearer '+req.query['x-op-nodekey']};
+            opts.encoding = null;
+            try{
+            	queryResult = await tokenValidation(opts);
+            } catch(e){
+            	console.log("Error authenticating:"+JSON.stringify(e))
+            	res.status(401).send('unauthorized');
+            }
+		} else {
+			res.status(401).send('unauthorized');
+		}
+	}
+	next();
+}
 
 function stats(pid) {
     return new Promise((resolve, reject) => {
@@ -187,9 +267,11 @@ app.get('/'+domain+'/health', function (req, res) {
 
 // Create a server
 var server = http.createServer(app);
-
-
-
+options = {};
+options.server = server;
+options.url = "/"+domain +"/appmetrics-dash";
+options.title = "Application Metrics for " + domain + " domain."
+options.middleware = myMiddleware;
 // Initialise the runtime with a server and settings
 RED.init(server,settings);
 
@@ -203,6 +285,7 @@ app.use(settings.httpNodeRoot,RED.httpNode);
 
 
 server.listen(port);
+dash.monitor(options);
 
 server.on('error', (e) => {
   if (e.code == 'EADDRINUSE') {
@@ -260,4 +343,8 @@ function comunicationProcess(input) {
 
 process.on('message', function(m) {
 	comunicationProcess(m);
+});
+
+process.on('SIGINT',function(){
+    process.exit(0);    
 });
