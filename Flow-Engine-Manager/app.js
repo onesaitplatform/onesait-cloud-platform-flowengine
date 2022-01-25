@@ -21,11 +21,9 @@ var promise = require('promise');
 var waitUntil = require('wait-until');
 var cp = require('child_process');
 
-
 const GelfTransport = require('winston-gelf');
 var winston = require('winston')
- 
-${COMMENT_GRAYLOG_START}
+/* 
   const options = {
     gelfPro: {
         fields: {app_name: "NodeRED", domain: "app.js"}, // optional; default fields for all messages
@@ -37,8 +35,8 @@ ${COMMENT_GRAYLOG_START}
         adapterName: 'tcp', // optional; currently supported "udp", "tcp" and "tcp-tls"; default: udp
         adapterOptions: { // this object is passed to the adapter.connect() method
             // common
-            host: '${GRAYLOG_HOST}', // optional; default: 127.0.0.1
-            port: ${GRAYLOG_PORT}, // optional; default: 12201
+            host: '192.168.1.109', // optional; default: 127.0.0.1
+            port: 12201, // optional; default: 12201
             // tcp adapter example
             family: 4, // tcp only; optional; version of IP stack; default: 4
             timeout: 1000 // tcp only; optional; default: 10000 (10 sec)     
@@ -48,17 +46,14 @@ ${COMMENT_GRAYLOG_START}
 }
  
   const gelfTransport = new GelfTransport(options);
- 
-${COMMENT_GRAYLOG_END}
+ */
   const logger = winston.createLogger({
     transports: [
       new winston.transports.Console()
-    ${COMMENT_GRAYLOG_START}
-      , gelfTransport
-      
-    ${COMMENT_GRAYLOG_END}
+      //, gelfTransport
     ]
   });
+
 
 
 // Create an Express app
@@ -116,7 +111,7 @@ function portInUse(port) {
 
                 if (portFile[1] == port) {
 
-                    logger.warn("Node-Red Manager. app.js-->portInUse(): WARNING! The "+port+"  Address in use, try again!");
+                    logger.info("Node-Red Manager. app.js-->portInUse(): WARNING! The "+port+"  Address in use, try again!");
 
                     isUsed = true;
 
@@ -223,7 +218,7 @@ function recoverDomain() {
 					
 					
 					listChildsRed[nameChild].on('uncaughtException', function (err) {
-						logger.error("Node-Red Manager. app.js-->recoverDomain(). Error in domain: "+nameChild);
+						logger.info("Node-Red Manager. app.js-->recoverDomain(). Error in domain: "+nameChild);
 					});
 					
 					
@@ -238,7 +233,7 @@ function recoverDomain() {
 
 			}
 		} catch (err) {
-			logger.error("Node-Red Manager. app.js-->recoverDomain(). Error starting domain");
+			logger.info("Node-Red Manager. app.js-->recoverDomain(). Error starting domain");
 		}
 		
     }
@@ -269,7 +264,7 @@ function stats(pid, listAllDomain, i) {
                     });
                     resolve(listAllDomain[i])
                 }catch(e){
-                    logger.error("Node-Red Manager. app.js-->REST Method: status(). STOP ChildProcess_PID: " + pid);
+                    logger.info("Node-Red Manager. app.js-->REST Method: status(). STOP ChildProcess_PID: " + pid);
                     deleteDomainData(pid, listAllDomain[i].domain);
                      reject(e);
                 }
@@ -277,7 +272,7 @@ function stats(pid, listAllDomain, i) {
 
             })
         }catch(e){
-            logger.error("Node-Red Manager. app.js-->REST Method: status(). STOP ChildProcess_PID: " + pid);
+            logger.info("Node-Red Manager. app.js-->REST Method: status(). STOP ChildProcess_PID: " + pid);
             deleteDomainData(pid, listAllDomain[i].domain);
              reject(e);
         }
@@ -295,7 +290,7 @@ function deleteDomainData(pid, queryDomain){
         pusage.unmonitor(listChildsRed[queryDomain].pid);
     }catch(e){
 
-    logger.error("Node-Red Manager. app.js-->REST Method: stopDomainMF(). ALREADY STOPPED ChildProcess_PID: " + pid);
+    logger.info("Node-Red Manager. app.js-->REST Method: stopDomainMF(). ALREADY STOPPED ChildProcess_PID: " + pid);
     }
     
      try{
@@ -308,7 +303,7 @@ function deleteDomainData(pid, queryDomain){
         //Actualizamos el fichero de estados con la nueva situaciÃ³n.
         updateFileDomainsStart(domains_START, queryDomain, line);
     }catch(e){
-         logger.error("Node-Red Manager. app.js-->REST Method: stopDomainMF(). ALREADY STOPPED ChildProcess_PID: " + e);
+         logger.info("Node-Red Manager. app.js-->REST Method: stopDomainMF(). ALREADY STOPPED ChildProcess_PID: " + e);
     }
 }
 
@@ -371,7 +366,7 @@ function socketCount(pid2){
                 resolve( sockertInfo);
             });
         }catch(e){
-            logger.error("Node-Red Manager. app.js-->REST Method: socketCount().  ChildProcess_PID: " + pid2);
+            logger.info("Node-Red Manager. app.js-->REST Method: socketCount().  ChildProcess_PID: " + pid2);
              reject(e);
         }
     })
@@ -680,14 +675,14 @@ app.post('/createDomainMF', function(req, res) {
             res.send('OK');
 
        }catch(err){
-         logger.error("Node-Red Manager. app.js-->REST Method: createDomainMF(). Error:",err);
+         logger.info("Node-Red Manager. app.js-->REST Method: createDomainMF(). Error:",err);
          res.statusCode = 404;
          res.send('Port unavailable');
        }
         
 
     }else{
-		 logger.warn("Node-Red Manager. app.js-->REST Method: createDomainMF(). Respuesta 404")
+		 logger.info("Node-Red Manager. app.js-->REST Method: createDomainMF(). Respuesta 404")
 		 res.statusCode = 404;
 		 res.send('Port unavailable');
 	}
@@ -725,7 +720,7 @@ app.post('/startDomainMF', function(req, res) {
             //Actualizamos el fichero de estados con la nueva situaciÃ³n.
             updateFileDomainsStart(domains_START, domain, line);
         } catch(e){
-            logger.error("Node-Red Manager. app.js-->REST Method: startDomainMF(). Domain was not running")
+            logger.info("Node-Red Manager. app.js-->REST Method: startDomainMF(). Domain was not running")
         }
     }
 	
@@ -763,7 +758,7 @@ app.post('/startDomainMF', function(req, res) {
 		
 		
 		listChildsRed[nameChild].on('uncaughtException', function (err) {
-			logger.error("Node-Red Manager. app.js-->REST Method: startDomainMF(). Error ejecutantdo Script de proceso hijo")
+			logger.info("Node-Red Manager. app.js-->REST Method: startDomainMF(). Error ejecutantdo Script de proceso hijo")
 		});
 		
 		//Asignamos el puerto para el dominio del  proxy. 
@@ -778,7 +773,7 @@ app.post('/startDomainMF', function(req, res) {
 		logger.info("Node-Red Manager. app.js-->REST Method: startDomainMF(). Successs ChildProcess_PID:" + listChildsRed[nameChild].pid);
 		res.send('OK');
 	} catch (err) {
-		logger.error("Node-Red Manager. app.js-->REST Method: startDomainMF(). Error 500")
+		logger.info("Node-Red Manager. app.js-->REST Method: startDomainMF(). Error 500")
 		res.statusCode = 500;
         res.send('Error');
     }
@@ -825,7 +820,7 @@ app.put('/stopDomainMF/:domain', function(req, res) {
                 //Actualizamos el fichero de estados con la nueva situaciÃ³n.
                 updateFileDomainsStart(domains_START, queryDomain, line);
         }catch(err){
-               logger.error("Node-Red Manager. app.js-->REST Method: stopDomainMF(). Error",err);
+               logger.info("Node-Red Manager. app.js-->REST Method: stopDomainMF(). Error",err);
         }
 
 		
@@ -852,7 +847,7 @@ app.delete('/deleteDomainMF/:domain', function(req, res) {
            var line = getLineFileDomain(queryDomain);
 
      }catch(err){
-        logger.error("Node-Red Manager. app.js-->REST Method: deleteDomainMF(). Error:",err);
+        logger.info("Node-Red Manager. app.js-->REST Method: deleteDomainMF(). Error:",err);
         res.statusCode = 404;
         res.send('ChildProcess_PID not running now!');
      }
@@ -873,7 +868,7 @@ app.delete('/deleteDomainMF/:domain', function(req, res) {
     try{
         updateFileDomainsStart(domains_START, queryDomain, line);
     }catch(errFile){
-        logger.error("Node-Red Manager. app.js-->REST Method: deleteDomainMF(). Error",errFile);
+        logger.info("Node-Red Manager. app.js-->REST Method: deleteDomainMF(). Error",errFile);
 
     }
 
@@ -899,12 +894,12 @@ app.delete('/deleteDomainMF/:domain', function(req, res) {
             delete listChildsRed[queryDomain];
 
         }catch(errChildProcess){
-            logger.error("Node-Red Manager. app.js-->REST Method: deleteDomainMF(). Error",errChildProcess);
+            logger.info("Node-Red Manager. app.js-->REST Method: deleteDomainMF(). Error",errChildProcess);
           }
 
        
     } else {
-        logger.warn("Node-Red Manager. app.js-->REST Method: deleteDomainMF(). ChildProcess_PID not running now!")
+        logger.info("Node-Red Manager. app.js-->REST Method: deleteDomainMF(). ChildProcess_PID not running now!")
         
     }
 	logger.info("Node-Red Manager. app.js-->REST Method: deleteDomainMF(). Ok");
@@ -928,7 +923,7 @@ app.get('/getAllDomainMF', function(req, res) {
             res.send(JSON.stringify(data)); 
         })   
      }catch(err){
-        logger.error("Node-Red Manager. app.js-->REST Method: getAllDomainMF(). Error",err);
+        logger.info("Node-Red Manager. app.js-->REST Method: getAllDomainMF(). Error",err);
         res.send(err);
      }
      
@@ -949,7 +944,7 @@ app.get('/getDomainStatusMF', function(req, res){
         res.send(strData);
     	})
  }catch(err){
-      logger.error("Node-Red Manager. app.js-->REST Method: getDomainStatusMF(). Error",err);
+      logger.info("Node-Red Manager. app.js-->REST Method: getDomainStatusMF(). Error",err);
       res.send(err);
    }
 });
@@ -984,7 +979,7 @@ app.get('/getDomainMF', function(req, res) {
 		logger.info("Node-Red Manager. app.js-->REST Method: getDomainMF(). Respuesta: "+JSON.stringify(objectJSON)); 
         res.send(JSON.stringify(objectJSON)); 
     }catch(err){
-        logger.error("Node-Red Manager. app.js-->REST Method: getDomainMF(). Error",err);
+        logger.info("Node-Red Manager. app.js-->REST Method: getDomainMF(). Error",err);
         res.send(err);
 
     }
@@ -1054,7 +1049,7 @@ app.post('/synchronizeMF', function(req, res) {
     
 
     }catch(err){
-        logger.error("Node-Red Manager. app.js-->REST Method: synchronizeMF(). Error:",err);
+        logger.info("Node-Red Manager. app.js-->REST Method: synchronizeMF(). Error:",err);
         res.send(err);
     }
 
@@ -1103,7 +1098,7 @@ app.post('/stopMF', function(req, res) {
         //logger.info("Cierra el proceso");
         process.exit();
     }catch(err){
-        logger.error("Node-Red Manager. app.js-->REST Method: stopMF()",err);
+        logger.info("Node-Red Manager. app.js-->REST Method: stopMF()",err);
         res.send(err);
     }
 });
@@ -1116,7 +1111,7 @@ server.listen(administrationPort);
 
 server.on('error', (e) => {
     if (e.code == 'EADDRINUSE') {
-        logger.warn("Node-Red Manager. app.js. WARNING! The administration port: "+administrationPort+" is in use");
+        logger.info("Node-Red Manager. app.js. WARNING! The administration port: "+administrationPort+" is in use");
         setTimeout(() => {
             server.listen(administrationPort);
         }, 1000);

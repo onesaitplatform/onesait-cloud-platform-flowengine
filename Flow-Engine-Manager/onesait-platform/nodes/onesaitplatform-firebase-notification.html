@@ -13,6 +13,7 @@
 				/*target:{value:""},
 				targetOrigin:{value:""},
 				targetType:{value:""},*/
+				proxy: {type:"http proxy",required: false},
 				authentication: {value: auth}
 			},
 			inputs: 1,
@@ -26,11 +27,31 @@
 				//.typedInput({types:['msg', {value:"full",label:RED._("node-red:debug.msgobj"),hasValue:false}]});
 				$("#node-input-typed-target").typedInput('value',this.target);
 				$("#node-input-typed-target").typedInput('type',this.targetOrigin);*/
+				function updateProxyOptions() {
+                    if ($("#node-input-useProxy").is(":checked")) {
+                        $("#node-input-useProxy-row").show();
+                    } else {
+                        $("#node-input-useProxy-row").hide();
+                    }
+                }
+                if (this.proxy) {
+                    $("#node-input-useProxy").prop("checked", true);
+                } else {
+                    $("#node-input-useProxy").prop("checked", false);
+                }
+                updateProxyOptions();
+                $("#node-input-useProxy").on("click", function() {
+                    updateProxyOptions();
+                });
+
 			},oneditsave: function() {
 	           /* var type = $("#node-input-typed-target").typedInput('type');
 	            var value = $("#node-input-typed-target").typedInput('value');
 	            $("#node-input-targetOrigin").val(type);
 	            $("#node-input-target").val(value);*/
+	            if (!$("#node-input-useProxy").is(":checked")) {
+                    $("#node-input-proxy").val("_ADD_");
+                }
 	        }
 		});
 	 function getParameterByName(name, url) {
@@ -68,6 +89,13 @@
 			<label for="node-input-databaseURL"><i class="icon-file"></i> Database URL</label>
 			<input type="text" id="node-input-databaseURL" placeholder="Database URL">
 		</div>
+		 <div class="form-row">
+            <input type="checkbox" id="node-input-useProxy" style="display: inline-block; width: auto; vertical-align: top;">
+            <label for="node-input-useProxy" style="width: auto;"><span data-i18n="httpin.use-proxy"></span></label>
+            <div id="node-input-useProxy-row" class="hide">
+                <label style="width: auto; margin-left: 20px; margin-right: 10px;" for="node-input-proxy"><i class="fa fa-globe"></i> <span data-i18n="httpin.proxy-config"></span></label><input type="text" style="width: 270px" id="node-input-proxy">
+            </div>
+        </div>
 		<!--
 		<div class="form-row">
 	        <label for="node-input-targetType"><i class="fa fa-tasks"></i> Target type</label>
@@ -76,6 +104,7 @@
 	        <option value="USER">User</option>
 	        </select>
 	    </div>
+	    
 		<div class="form-row">
 	        <label for="node-input-typed-target"><i class="fa fa-list"></i> <span >Target</span></label>
 	        <input id="node-input-typed-target" type="text" style="width: 70%">

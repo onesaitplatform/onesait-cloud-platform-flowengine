@@ -1,11 +1,13 @@
 
 module.exports = function(RED) {
+    
 	var Client = require('node-rest-client').Client;
 	var platformConfig = require('./config/onesait-platform-config');
 	var client = new Client();
 	var admin = require("firebase-admin");
 
-
+    const tunnel = require('tunnel2');
+    
 	//var serviceAccount = require("path/to/serviceAccountKey.json");
 
 	
@@ -20,16 +22,49 @@ module.exports = function(RED) {
 		var nodeClientEmail = n.clientEmail;
 		var nodePrivateKey = n.privateKey.replace(/\\n/g, '\n');
 		var nodeDatabaseURL = n.databaseURL;
+        var proxyParams = n.proxy;
 		var app;
 		var appStarted = false;
+        var proxyUrl, proxyAuthCred, proxyHost, proxyPort;
+        var proxyAgent = false;
+        //if (process.env.http_proxy) { proxyUrl = process.env.http_proxy;}
+        //if (process.env.HTTP_PROXY) { proxyUrl = process.env.HTTP_PROXY;}
+        if (n.proxy) {
+            console.log("Entering FIREBASE Proxy config");
+            var proxyConfig = RED.nodes.getNode(n.proxy);
+            proxyUrl = proxyConfig.url;
+            //noprox = proxyConfig.noproxy;
+            proxyAuthCred=proxyConfig.credentials.username+':'+proxyConfig.credentials.password;
+            proxyHost = proxyUrl.split("//")[1].split(":")[0];
+            proxyPort = proxyUrl.split("//")[1].split(":")[1];
+            if(proxyConfig.credentials.username && proxyConfig.credentials.username != undefined && proxyConfig.credentials.username!== ""){
+                console.log("... Proxy User IS defined. "+proxyUrl+ " - "+proxyHost+" - "+proxyPort);
+                proxyAgent = tunnel.httpsOverHttp({
+                proxy: {
+                    host: proxyHost,
+                    port: proxyPort,
+                    proxyAuth: proxyAuthCred
+                }
+                });
+            }else{ 
+                console.log("... Proxy User NOT defined. "+proxyUrl+ " - "+proxyHost+" - "+proxyPort);
+                proxyAgent = tunnel.httpsOverHttp({
+                proxy: {
+                    host: proxyHost,
+                    port: proxyPort
+                }
+                });
+            }
+        }  
 		try{
 			app = admin.initializeApp({
 					credential: admin.credential.cert({
 					projectId: n.projectId,
 					clientEmail: n.clientEmail,
 					privateKey: n.privateKey.replace(/\\n/g, '\n')
-					}),
-					databaseURL: n.databaseURL
+					},proxyAgent),
+					databaseURL: n.databaseURL,
+                    httpAgent: proxyAgent
 			});
 			if(app.name == '[DEFAULT]'){
 				node.log('OK');
@@ -40,6 +75,8 @@ module.exports = function(RED) {
 				this.status({fill:"red",shape:"dot",text:"Not connected"});
 			}
 		}catch(err){
+            console.log(err);
+            console.log("Error creating FIREBASE client: "+JSON.stringify(err));
 			node.log('Unable to create Firebase client.');
 			this.status({fill:"red",shape:"dot",text:"Not connected"});
 			appStarted = false;
@@ -122,8 +159,9 @@ module.exports = function(RED) {
 									projectId: credProjectId,
 									clientEmail: credClientEmail,
 									privateKey: credPrivateKey
-								  }),
-								  databaseURL: credDatabaseURL
+								  },proxyAgent),
+								  databaseURL: credDatabaseURL,
+                                  httpAgent: proxyAgent
 				});
 				if(app.name == '[DEFAULT]'){
 					node.log('OK');
