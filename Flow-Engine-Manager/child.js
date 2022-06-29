@@ -42,7 +42,11 @@ var domain = process.env.domain;
 var port = process.env.port;
 var home = process.env.home;
 var servicePort = process.env.servicePort;
-
+${COMMENT_PROXY_START}
+process.env.http_proxy = '${HTTP_PROXY}';
+process.env.https_proxy = '${HTTPS_PROXY}';
+process.env.no_proxy = '${NO_PROXY}';
+${COMMENT_PROXY_END}
  //settings NODE-RED
 	 settings = {
 	    httpAdminRoot:"/"+domain,
