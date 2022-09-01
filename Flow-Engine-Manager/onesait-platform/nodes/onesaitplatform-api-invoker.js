@@ -57,7 +57,8 @@ module.exports = function(RED) {
                 } else if(element.type =='DoNotSend'){
                     //Do nothing with the param
                     skipParam = true;
-                    console.log("Discarded operation param as is optional and was marked as 'DoNotSend'. API: "+restApiName+" - V"+restApiVersion+" Operation: "+restApiOperationName+"Param: "+element.value);
+                    var infoMsg="Discarded operation param as is optional and was marked as 'DoNotSend'. API: "+restApiName+" - V"+restApiVersion+" Operation: "+restApiOperationName+"Param: "+element.value;
+                    console.log("timestamp: ",new Date().getTime(), ", domain: ", process.env.domain, ", nodeId: ", n.id, ", msgid: ", msg._msgid, ", operation: onesaitplatform-Rest-API-invoker, message: ", infoMsg);
                 } else {
                     // the value comes from the previous message
                     //replace array brakets for just the number
@@ -75,6 +76,7 @@ module.exports = function(RED) {
                         } else {
                             if(element.required){
                                 var errorMsg = "msg."+element.value+" does not exist in message. Please check '"+paramValue.name+"' input param definition.";
+                                console.log("timestamp: ",new Date().getTime(), ", domain: ", process.env.domain, ", nodeId: ", n.id, ", msgid: ", msg._msgid, ", operation: onesaitplatform-Rest-API-invoker, message: ", errorMsg);
                                 node.error(errorMsg);
                                 node.status({fill:"red", shape:"ring", text:"Please check '"+paramValue.name+"' input param definition."});
                                 errorOnValueRetrieval=true;
@@ -84,7 +86,8 @@ module.exports = function(RED) {
                                 break;
                             } else {
                                 skipParam = true;
-                                console.log("Discarded operation param as is optional and 'undefined' value was assigned. API: "+restApiName+" - V"+restApiVersion+" Operation: "+restApiOperationName+"Param: "+element.value);
+                                var warnMsg="Discarded operation param as is optional and 'undefined' value was assigned. API: "+restApiName+" - V"+restApiVersion+" Operation: "+restApiOperationName+"Param: "+element.value;
+                                console.log("timestamp: ",new Date().getTime(), ", domain: ", process.env.domain, ", nodeId: ", n.id, ", msgid: ", msg._msgid, ", operation: onesaitplatform-Rest-API-invoker, message: ", warnMsg);
                             }
                         }
                     }
@@ -100,7 +103,7 @@ module.exports = function(RED) {
             });
             //Do not continue if param values are wrong
             if(errorOnValueRetrieval) return;
-            var body = JSON.stringify({ "apiName": restApiName, "apiVersion":restApiVersion, "operationName": restApiOperationName, "operationMethod":restApiOperationMethod, "operationInputParams":inputParamValues, "domainName": process.env.domain});
+            var body = JSON.stringify({ "apiName": restApiName, "apiVersion":restApiVersion, "operationName": restApiOperationName, "operationMethod":restApiOperationMethod, "operationInputParams":inputParamValues, "domainName": process.env.domain, "verticalSchema": process.env.vertical});
 
             opts.body=body;
 
@@ -115,6 +118,7 @@ module.exports = function(RED) {
                         node.error(err,msg);
                         node.status({fill:"red", shape:"ring", text:err.code});
                     }
+                    console.log("timestamp: ",new Date().getTime(), ", domain: ", process.env.domain, ", nodeId: ", n.id, ", msgid: ", msg._msgid, ", operation: onesaitplatform-Rest-API-invoker, message: ", err.code);
                     msg.payload = err.toString() + " : " + endpoint;
                     msg.statusCode = err.code;
                     msg.ok=false;
@@ -131,6 +135,8 @@ module.exports = function(RED) {
                         if(Buffer.isBuffer(msg.payload)){
                             msg.payload = msg.payload.toString("UTF-8");
                         }
+                        
+                        console.log("timestamp: ",new Date().getTime(), ", domain: ", process.env.domain, ", nodeId: ", n.id, ", msgid: ", msg._msgid, ", operation: onesaitplatform-Rest-API-invoker, message: ", "Body response was not a JSON.");
                         node.status({fill:"red", shape:"ring", text:"Body response was not a JSON."});
                         node.warn(RED._("httpin.errors.json-error")); 
                     }
@@ -151,6 +157,8 @@ module.exports = function(RED) {
                             }
                         }
                     });
+                    
+                    console.log("timestamp: ",new Date().getTime(), ", domain: ", process.env.domain, ", nodeId: ", n.id, ", msgid: ", msg._msgid, ", operation: onesaitplatform-Rest-API-invoker, message: Status code ", res.statusCode);
                     node.status({});
                     node.send(msgToSend);
                 }

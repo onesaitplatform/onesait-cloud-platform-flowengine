@@ -88,7 +88,7 @@ module.exports = function(RED) {
             });
             //Do not continue if param values are wrong
             if(errorOnValueRetrieval) return;
-            var body = JSON.stringify({ "apiName": managementRestApiName, "apiVersion":managementRestApiVersion, "operationName": managementRestApiOperationName, "operationMethod":managementRestApiOperationMethod, "operationInputParams":inputParamValues, "domainName": process.env.domain});
+            var body = JSON.stringify({ "apiName": managementRestApiName, "apiVersion":managementRestApiVersion, "operationName": managementRestApiOperationName, "operationMethod":managementRestApiOperationMethod, "operationInputParams":inputParamValues, "domainName": process.env.domain, "verticalSchema": process.env.vertical});
 
             opts.body=body;
 
@@ -103,6 +103,7 @@ module.exports = function(RED) {
                         node.error(err,msg);
                         node.status({fill:"red", shape:"ring", text:err.code});
                     }
+                    console.log("timestamp: ",new Date().getTime(), ", domain: ", process.env.domain, ", nodeId: ", n.id, ", msgid: ", msg._msgid, ", operation: onesaitplatform-management-Rest-API-invoker, message: ", err.code);
                     msg.payload = err.toString() + " : " + endpoint;
                     msg.statusCode = err.code;
                     msg.ok=false;
@@ -119,6 +120,7 @@ module.exports = function(RED) {
                         if(Buffer.isBuffer(msg.payload)){
                             msg.payload = msg.payload.toString("UTF-8");
                         }
+                        console.log("timestamp: ",new Date().getTime(), ", domain: ", process.env.domain, ", nodeId: ", n.id, ", msgid: ", msg._msgid, ", operation: onesaitplatform-management-Rest-API-invoker, message: ", "Body response was not a JSON.");
                         node.status({fill:"red", shape:"ring", text:"Body response was not a JSON."});
                         //node.warn(RED._("httpin.errors.json-error")); 
                     }
@@ -139,6 +141,7 @@ module.exports = function(RED) {
                             }
                         }
                     });
+                    console.log("timestamp: ",new Date().getTime(), ", domain: ", process.env.domain, ", nodeId: ", n.id, ", msgid: ", msg._msgid, ", operation: onesaitplatform-management-Rest-API-invoker, message: Status code ", res.statusCode);
                     node.status({});
                     node.send(msgToSend);
                 }

@@ -18,13 +18,13 @@ var process = require('process');
              var args = {
                 requesConfig: { timeout: 5000 },
                 responseConfig: { timeout: 5000 },
-                data: { "ontology": targetOntology, "data": JSON.stringify(msg.payload), "domainName": process.env.domain},
+                data: { "ontology": targetOntology, "data": JSON.stringify(msg.payload), "domainName": process.env.domain, "verticalSchema": process.env.vertical},
                 headers: { "Content-Type": "application/json" }
             };
             var endpoint = platformConfig.scriptBasePath + "/flowengine/node/services/user/insert";
             var req = client.post(endpoint, args,function (data, response) {
                 // parsed response body as js object 
-                console.log("statusCode: ", response.statusCode);
+                console.log("timestamp: ",new Date().getTime(), ", domain: ", process.env.domain, ", nodeId: ", n.id, ", msgid: ", msg._msgid, ", operation: onesaitplatform-insert, message: Status code ", response.statusCode);
                 if(response.statusCode== 200){
                     msg.ok=true;
                 }else{
@@ -35,13 +35,13 @@ var process = require('process');
             });
             req.on('requestTimeout', function (req) {
                 msg.ok=false;
-                console.log("request has expired");
+                console.log("timestamp: ",new Date().getTime(), "domain: ", process.env.domain, ", nodeId: ", n.id, ", msgid: ", msg._msgid, ", operation: onesaitplatform-insert, message: Error, request has expired");
                 req.abort();
             });
              
             req.on('responseTimeout', function (res) {
                 msg.ok=false;
-                console.log("response has expired");
+                console.log("timestamp: ",new Date().getTime(), "domain: ", process.env.domain, ", nodeId: ", n.id,  ", msgid: ", msg._msgid, ", operation: onesaitplatform-insert, message: Error, response has expired");
             });
         });
         

@@ -31,7 +31,7 @@ gelfLog.setConfig({
     // tcp adapter example
     family: 4, // tcp only; optional; version of IP stack; default: 4
     timeout: 1000 // tcp only; optional; default: 10000 (10 sec)
-    
+
   }
 });
 ${COMMENT_GRAYLOG_END}
@@ -53,8 +53,9 @@ ${COMMENT_PROXY_END}
 	    httpNodeRoot: "/"+domain,
 	    userDir:home,
 	    flowFile:home+"/flows_"+domain+".json",
+      credentialSecret: '${FLOW_SECRET}',
 	    servicePortOnesaitPlatform : servicePort,
-	    functionGlobalContext: { }   , 
+	    functionGlobalContext: { }   ,
         // Timeout in milliseconds for HTTP request connections
         httpRequestTimeout: ${HTTPREQUESTTIMEOUT},
         socketTimeout: ${SOCKETTIMEOUT},
@@ -79,7 +80,7 @@ ${COMMENT_PROXY_END}
 	        projects: {
 	            // To enable the Projects feature, set this value to true
 	            enabled: true
-	        }, 
+	        },
 	        userMenu: false
 	    },
 	    adminAuth: require("./node_modules/node-red/user-authentication")
@@ -91,7 +92,7 @@ ${COMMENT_PROXY_END}
 		    // to the relevant HTTP In node.
 
 		    if (typeof req.headers['x-op-nodekey'] != "undefined" && req.headers['x-op-nodekey'] != null) {
-		    	
+
 				var opts = {};
 		    	opts.hostname = "localhost";
 		    	opts.port = 5050;
@@ -226,9 +227,9 @@ function stats(pid) {
 }
 
 function socketCount(pid){
-    
-    
-    
+
+
+
     return new Promise((resolve, reject) => {
         try{
     		if(pid==null){
@@ -247,27 +248,42 @@ function socketCount(pid){
         }
     })
 }
-    
+
 //Healthcheck endoint
 app.get('/'+domain+'/health', function (req, res) {
-    
+
     try{
         stats(process.pid).then(function(data) {
 			console.log("Node-Red Manager. app.js-->REST Method: getAllDomainMF(). Respuesta:"+JSON.stringify(data));
             var domainStats = data;
             socketCount(process.pid).then(function(data3){
                 domainStats.sockets = data3;
-                
-            res.send(JSON.stringify(domainStats)); 
-                
+
+            res.send(JSON.stringify(domainStats));
+
             })
-        })   
+        })
      }catch(err){
         console.log("Node-Red Manager. app.js-->REST Method: getAllDomainMF(). Error",err);
         res.send(err);
      }
 })
 
+if (process.env.PROMETHEUS_ENABLED == 'true'){
+    console.log("Enabling prometheus metrics for domain: " + domain );
+    const client = require('prom-client');
+
+    // Create a Registry to register the metrics
+    const register = new client.Registry();
+    client.collectDefaultMetrics({
+        labels: { domain: domain },
+        register
+    });
+    app.get('/'+domain+'/metrics', async (req, res) => {
+        res.setHeader('Content-Type', register.contentType);
+        res.send(await register.metrics());
+    });
+}
 
 // Create a server
 var server = http.createServer(app);
@@ -314,15 +330,15 @@ RED.start().then(function(){
 
 //Comunicacion con el padre.
 function comunicationProcess(input) {
-  
+
    var message ="";
    if(input!=null && input.msg!=undefined){
 
    	  message = input.msg;
-   
+
    }else{
    	  message = input;
-   
+
    }
 
 	switch(message) {
@@ -340,9 +356,9 @@ function comunicationProcess(input) {
 				process.exit(1);
 			}, 2000);
 	    default:
-	       
+
 	}
-  
+
 }
 
 process.on('message', function(m) {
@@ -350,5 +366,5 @@ process.on('message', function(m) {
 });
 
 process.on('SIGINT',function(){
-    process.exit(0);    
+    process.exit(0);
 });
