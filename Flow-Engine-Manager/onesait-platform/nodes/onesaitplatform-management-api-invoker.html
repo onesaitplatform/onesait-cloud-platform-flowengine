@@ -42,7 +42,7 @@
             managementOperationInputs: {value:[],validate:function(v){
                 var validationRes = true;
                 v.forEach(function(element){
-                    if(element.value == "") validationRes = false;
+                    if(element.type == "msg" && element.value == "") validationRes = false;
                 });
                 return validationRes;
             }},

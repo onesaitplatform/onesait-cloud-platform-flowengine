@@ -76,6 +76,7 @@ module.exports = function(RED) {
             requestData.paragraphId = paragraphSelector;
             requestData.executeNotebook = fullexecutionnotebook;
             requestData.domainName = process.env.domain;
+            requestData.verticalSchema = process.env.vertical;
             //Prepare execution params
             var execParamsReadyToSend = {"name":"new note","params":{}};
             var execParamsToObject  = JSON.parse(executionParams);
@@ -115,7 +116,9 @@ module.exports = function(RED) {
 			// Run execution
 			request(opts, function(err, res, body) {
                 if(err){
-                	msg.payload="todo va mal";
+                	msg.payload="error";
+                    //console.log("timestamp: ",new Date().getTime(), ", domain: ", process.env.domain, ", nodeId: ", n.id, ", msgid: ", msg._msgid, ", operation: Notebook Launcher, message: ", err);
+                    node.send(msg);
                 }else{
                 	var results = JSON.parse(body.toString());
                 	if(fullexecutionnotebook) {
@@ -131,7 +134,7 @@ module.exports = function(RED) {
 		                	}
 
 		                	msg.payload = singleResult;
-		                	totalOutputResults[outputNum] = msg;
+		                	totalOutputResults[outputNum] = Object.assign({}, msg);
 	                		node.send(totalOutputResults);
 	                	}
                 	} else {

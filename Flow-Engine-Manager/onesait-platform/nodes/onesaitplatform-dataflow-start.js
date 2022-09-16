@@ -39,13 +39,13 @@ module.exports = function(RED) {
              var args = {
                 requesConfig: { timeout: 5000 },
                 responseConfig: { timeout: 5000 },
-                data: { "dataflowIdentification": targetDataflowIdentification, "domainName": process.env.domain, "parameters":finalParameters, "resetOrigin":finalResetOrigin},
+                data: { "dataflowIdentification": targetDataflowIdentification, "domainName": process.env.domain, "parameters":finalParameters, "resetOrigin":finalResetOrigin, "verticalSchema": process.env.vertical},
                 headers: { "Content-Type": "application/json" }
             };
             var endpoint = platformConfig.scriptBasePath + "/flowengine/node/services/user/dataflow/start";
             var req = client.post(endpoint, args,function (data, response) {
                 // parsed response body as js object 
-                console.log("statusCode: ", response.statusCode);
+                console.log("timestamp: ",new Date().getTime(), ", domain: ", process.env.domain, ", nodeId: ", n.id, ", msgid: ", msg._msgid, ", operation: Start Dataflow, message: Status code ", response.statusCode);
                 if(response.statusCode== 200){
                     msg.ok=true;
                     msg.payload=data;
@@ -61,13 +61,13 @@ module.exports = function(RED) {
             });
             req.on('requestTimeout', function (req) {
                 msg.ok=false;
-                console.log("request has expired");
+                console.log("timestamp: ",new Date().getTime(), "domain: ", process.env.domain, ", nodeId: ", n.id, ", msgid: ", msg._msgid, ", operation: Start Dataflow, message: Error, request has expired");
                 req.abort();
             });
              
             req.on('responseTimeout', function (res) {
                 msg.ok=false;
-                console.log("response has expired");
+                console.log("timestamp: ",new Date().getTime(), "domain: ", process.env.domain, ", nodeId: ", n.id, ", msgid: ", msg._msgid, ", operation: Start Dataflow, message: Error, response has expired");
             });
         });
         

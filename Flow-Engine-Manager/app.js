@@ -21,9 +21,11 @@ var promise = require('promise');
 var waitUntil = require('wait-until');
 var cp = require('child_process');
 
+
 const GelfTransport = require('winston-gelf');
 var winston = require('winston')
-/* 
+ 
+${COMMENT_GRAYLOG_START}
   const options = {
     gelfPro: {
         fields: {app_name: "NodeRED", domain: "app.js"}, // optional; default fields for all messages
@@ -35,8 +37,8 @@ var winston = require('winston')
         adapterName: 'tcp', // optional; currently supported "udp", "tcp" and "tcp-tls"; default: udp
         adapterOptions: { // this object is passed to the adapter.connect() method
             // common
-            host: '192.168.1.109', // optional; default: 127.0.0.1
-            port: 12201, // optional; default: 12201
+            host: '${GRAYLOG_HOST}', // optional; default: 127.0.0.1
+            port: ${GRAYLOG_PORT}, // optional; default: 12201
             // tcp adapter example
             family: 4, // tcp only; optional; version of IP stack; default: 4
             timeout: 1000 // tcp only; optional; default: 10000 (10 sec)     
@@ -46,14 +48,17 @@ var winston = require('winston')
 }
  
   const gelfTransport = new GelfTransport(options);
- */
+ 
+${COMMENT_GRAYLOG_END}
   const logger = winston.createLogger({
     transports: [
       new winston.transports.Console()
-      //, gelfTransport
+    ${COMMENT_GRAYLOG_START}
+      , gelfTransport
+      
+    ${COMMENT_GRAYLOG_END}
     ]
   });
-
 
 
 // Create an Express app
@@ -111,7 +116,7 @@ function portInUse(port) {
 
                 if (portFile[1] == port) {
 
-                    logger.info("Node-Red Manager. app.js-->portInUse(): WARNING! The "+port+"  Address in use, try again!");
+                    logger.warn("Node-Red Manager. app.js-->portInUse(): WARNING! The "+port+"  Address in use, try again!");
 
                     isUsed = true;
 
@@ -190,10 +195,11 @@ function recoverDomain() {
 				var home = splitRead[2];
 				var servicePort = splitRead[3];
 				var state = splitRead[4];
+				var vertical = splitRead[5];
 
 				 
 				 if(state!=undefined){
-					var stateSTART = state.split(":")[1].substr(0,state.split(":")[1].length-1);
+					var stateSTART = state.split(":")[1];
 		 
 				 }
 				
@@ -206,7 +212,9 @@ function recoverDomain() {
 						port: port.split(":")[1],
 						home: home.split(":")[1],
 						HOME: home.split(":")[1],
-						servicePort: servicePort.split(":")[1]
+						servicePort: servicePort.split(":")[1],
+						vertical: vertical.split(":")[1].substr(0,vertical.split(":")[1].length-1),
+                        PROMETHEUS_ENABLED: process.env.PROMETHEUS_ENABLED
 					};
 
 					nameChild = domain.split(":")[1];
@@ -218,7 +226,7 @@ function recoverDomain() {
 					
 					
 					listChildsRed[nameChild].on('uncaughtException', function (err) {
-						logger.info("Node-Red Manager. app.js-->recoverDomain(). Error in domain: "+nameChild);
+						logger.error("Node-Red Manager. app.js-->recoverDomain(). Error in domain: "+nameChild);
 					});
 					
 					
@@ -233,7 +241,7 @@ function recoverDomain() {
 
 			}
 		} catch (err) {
-			logger.info("Node-Red Manager. app.js-->recoverDomain(). Error starting domain");
+			logger.error("Node-Red Manager. app.js-->recoverDomain(). Error starting domain");
 		}
 		
     }
@@ -259,12 +267,13 @@ function stats(pid, listAllDomain, i) {
                 try{
                     listAllDomain[i].memory = data.memory;
                     listAllDomain[i].cpu = data.cpu;
+                    listAllDomain[i].sockets = [];
                     socketCount(pid).then(function(data3){
                          listAllDomain[i].sockets = data3;
                     });
                     resolve(listAllDomain[i])
                 }catch(e){
-                    logger.info("Node-Red Manager. app.js-->REST Method: status(). STOP ChildProcess_PID: " + pid);
+                    logger.error("Node-Red Manager. app.js-->REST Method: status(). STOP ChildProcess_PID: " + pid);
                     deleteDomainData(pid, listAllDomain[i].domain);
                      reject(e);
                 }
@@ -272,7 +281,7 @@ function stats(pid, listAllDomain, i) {
 
             })
         }catch(e){
-            logger.info("Node-Red Manager. app.js-->REST Method: status(). STOP ChildProcess_PID: " + pid);
+            logger.error("Node-Red Manager. app.js-->REST Method: status(). STOP ChildProcess_PID: " + pid);
             deleteDomainData(pid, listAllDomain[i].domain);
              reject(e);
         }
@@ -290,7 +299,7 @@ function deleteDomainData(pid, queryDomain){
         pusage.unmonitor(listChildsRed[queryDomain].pid);
     }catch(e){
 
-    logger.info("Node-Red Manager. app.js-->REST Method: stopDomainMF(). ALREADY STOPPED ChildProcess_PID: " + pid);
+    logger.error("Node-Red Manager. app.js-->REST Method: stopDomainMF(). ALREADY STOPPED ChildProcess_PID: " + pid);
     }
     
      try{
@@ -303,7 +312,7 @@ function deleteDomainData(pid, queryDomain){
         //Actualizamos el fichero de estados con la nueva situaciÃ³n.
         updateFileDomainsStart(domains_START, queryDomain, line);
     }catch(e){
-         logger.info("Node-Red Manager. app.js-->REST Method: stopDomainMF(). ALREADY STOPPED ChildProcess_PID: " + e);
+         logger.error("Node-Red Manager. app.js-->REST Method: stopDomainMF(). ALREADY STOPPED ChildProcess_PID: " + e);
     }
 }
 
@@ -356,17 +365,17 @@ function socketCount(pid2){
     return new Promise((resolve, reject) => {
         try{
             if(pid2==null){
-                  resolve({});
+                  resolve([]);
             }
             cp.exec('lsof -i -P |grep '+pid2, function (err, data) {
                 if(err)
-                    resolve({});
+                    resolve([]);
                 var sockertInfo = data.split('\n');
                 sockertInfo.pop(); //last one is always empty
                 resolve( sockertInfo);
             });
         }catch(e){
-            logger.info("Node-Red Manager. app.js-->REST Method: socketCount().  ChildProcess_PID: " + pid2);
+            logger.error("Node-Red Manager. app.js-->REST Method: socketCount().  ChildProcess_PID: " + pid2);
              reject(e);
         }
     })
@@ -395,11 +404,12 @@ function getAllDomain() {
             var home = splitRead[2];
             var servicePort = splitRead[3];
             var state = splitRead[4];
+            var vertical = splitRead[5];
 			if (domain != undefined && state != undefined) {
                 //logger.info(domain + "  --  " + port + "  --  " + state);
 				
 				var runtimeState;
-				if(state.split(":")[1].substr(0,state.split(":")[1].length-1)=='STOP'){
+				if(state.split(":")[1]=='STOP'){
 					runtimeState='STOP';
 				}else{
 					var runtimeState = (usersPorts[domain.split(":")[1]]==undefined) ? 'STARTING': 'START';
@@ -411,7 +421,8 @@ function getAllDomain() {
                     port: port.split(":")[1],
                     home: home.split(":")[1],
                     servicePort : servicePort.split(":")[1],
-                    state: state.split(":")[1].substr(0,state.split(":")[1].length-1),
+                    state: state.split(":")[1],
+                    vertical: vertical.split(":")[1].substr(0,vertical.split(":")[1].length-1),
 					runtimeState: runtimeState,
                     cpu: cpu, 
                     memory: memory
@@ -453,12 +464,13 @@ function getStatusDomain(req){
             var home = splitRead[2];
             var servicePort = splitRead[3];
             var state = splitRead[4];
+            var vertical = splitRead[5];
             if (domain != undefined && state != undefined) {
                
                 if(queryDomains.indexOf(domain.split(":")[1])!=-1){
 
                     var runtimeState;
-                    if(state.split(":")[1].substr(0,state.split(":")[1].length-1)=='STOP'){
+                    if(state.split(":")[1]=='STOP'){
                         runtimeState='STOP';
                     }else{
                         var runtimeState = (usersPorts[domain.split(":")[1]]==undefined) ? 'STARTING': 'START';
@@ -469,7 +481,8 @@ function getStatusDomain(req){
                         port: port.split(":")[1],
                         home: home.split(":")[1],
                         servicePort : servicePort.split(":")[1],
-                        state: state.split(":")[1].substr(0,state.split(":")[1].length-1),
+                        state: state.split(":")[1],
+                        vertical: vertical.split(":")[1].substr(0,vertical.split(":")[1].length-1),
                         runtimeState: runtimeState,
                         cpu: cpu, 
                         memory: memory 
@@ -608,7 +621,7 @@ function SynchronizingDomains(file, listSyncDomain) {
             if (resultGetDomain != null && resultGetDomain != undefined && resultGetDomain != "") {
 
                 var stateGetDomain = resultGetDomain.toString().split('#');
-                var state = stateGetDomain[4].split(':')[1].substr(0, stateGetDomain[4].split(':')[1].length - 1);
+                var state = stateGetDomain[4].split(':')[1];
 
 
                 if (objSync.state != state) {
@@ -634,7 +647,7 @@ function SynchronizingDomains(file, listSyncDomain) {
                 }
             } else { //No encuentra en la lista de dominios; Hay que insertarlo
 
-                var line = "[Domain:" + objSync.domain + "#Port:" + objSync.port + "#Home:" + objSync.home + "#servicePort:" + objSync.servicePort + "#Estado:" + objSync.state + "]";
+                var line = "[Domain:" + objSync.domain + "#Port:" + objSync.port + "#Home:" + objSync.home + "#servicePort:" + objSync.servicePort + "#Estado:" + objSync.state + "#Vertical:" + objSync.vertical +"]";
                 updateFileDomainsStart(domains_START, objSync.domain, line);
 
             }
@@ -665,7 +678,7 @@ app.post('/createDomainMF', function(req, res) {
 
     if (!portInUse(port)) {
         var estado = "STOP";
-        var line = "[Domain:" + domain + "#Port:" + port + "#Home:" + home + "#servicePort:" + servicePort + "#Estado:" + estado + "]";
+        var line = "[Domain:" + domain + "#Port:" + port + "#Home:" + home + "#servicePort:" + servicePort + "#Estado:" + estado + "#Vertical:" + vertical +"]";
 
        try{
             //Append linea en el fichero de Domains
@@ -675,14 +688,14 @@ app.post('/createDomainMF', function(req, res) {
             res.send('OK');
 
        }catch(err){
-         logger.info("Node-Red Manager. app.js-->REST Method: createDomainMF(). Error:",err);
+         logger.error("Node-Red Manager. app.js-->REST Method: createDomainMF(). Error:",err);
          res.statusCode = 404;
          res.send('Port unavailable');
        }
         
 
     }else{
-		 logger.info("Node-Red Manager. app.js-->REST Method: createDomainMF(). Respuesta 404")
+		 logger.warn("Node-Red Manager. app.js-->REST Method: createDomainMF(). Respuesta 404")
 		 res.statusCode = 404;
 		 res.send('Port unavailable');
 	}
@@ -720,7 +733,7 @@ app.post('/startDomainMF', function(req, res) {
             //Actualizamos el fichero de estados con la nueva situaciÃ³n.
             updateFileDomainsStart(domains_START, domain, line);
         } catch(e){
-            logger.info("Node-Red Manager. app.js-->REST Method: startDomainMF(). Domain was not running")
+            logger.error("Node-Red Manager. app.js-->REST Method: startDomainMF(). Domain was not running")
         }
     }
 	
@@ -730,10 +743,11 @@ app.post('/startDomainMF', function(req, res) {
 		var port = req.body.port;
 		var home = req.body.home;
 		var servicePort = req.body.servicePort;
+        var vertical = req.body.vertical;
 
 		var estado = "START"
 
-		var line = "[Domain:" + domain + "#Port:" + port + "#Home:" + home + "#servicePort:" + servicePort + "#Estado:" + estado + "]";
+		var line = "[Domain:" + domain + "#Port:" + port + "#Home:" + home + "#servicePort:" + servicePort + "#Estado:" + estado + "#Vertical:" + vertical + "]";
 
 
 		//Actualizamos el fichero de estados con la nueva situaciÃ³n.
@@ -747,7 +761,9 @@ app.post('/startDomainMF', function(req, res) {
 			port: port,
 			home: home,
             HOME: home,
-			servicePort: servicePort
+			servicePort: servicePort,
+            vertical: vertical,
+            PROMETHEUS_ENABLED: process.env.PROMETHEUS_ENABLED
 		};
 
 		nameChild = domain;
@@ -758,7 +774,7 @@ app.post('/startDomainMF', function(req, res) {
 		
 		
 		listChildsRed[nameChild].on('uncaughtException', function (err) {
-			logger.info("Node-Red Manager. app.js-->REST Method: startDomainMF(). Error ejecutantdo Script de proceso hijo")
+			logger.error("Node-Red Manager. app.js-->REST Method: startDomainMF(). Error ejecutantdo Script de proceso hijo")
 		});
 		
 		//Asignamos el puerto para el dominio del  proxy. 
@@ -773,7 +789,7 @@ app.post('/startDomainMF', function(req, res) {
 		logger.info("Node-Red Manager. app.js-->REST Method: startDomainMF(). Successs ChildProcess_PID:" + listChildsRed[nameChild].pid);
 		res.send('OK');
 	} catch (err) {
-		logger.info("Node-Red Manager. app.js-->REST Method: startDomainMF(). Error 500")
+		logger.error("Node-Red Manager. app.js-->REST Method: startDomainMF(). Error 500")
 		res.statusCode = 500;
         res.send('Error');
     }
@@ -820,7 +836,7 @@ app.put('/stopDomainMF/:domain', function(req, res) {
                 //Actualizamos el fichero de estados con la nueva situaciÃ³n.
                 updateFileDomainsStart(domains_START, queryDomain, line);
         }catch(err){
-               logger.info("Node-Red Manager. app.js-->REST Method: stopDomainMF(). Error",err);
+               logger.error("Node-Red Manager. app.js-->REST Method: stopDomainMF(). Error",err);
         }
 
 		
@@ -847,7 +863,7 @@ app.delete('/deleteDomainMF/:domain', function(req, res) {
            var line = getLineFileDomain(queryDomain);
 
      }catch(err){
-        logger.info("Node-Red Manager. app.js-->REST Method: deleteDomainMF(). Error:",err);
+        logger.error("Node-Red Manager. app.js-->REST Method: deleteDomainMF(). Error:",err);
         res.statusCode = 404;
         res.send('ChildProcess_PID not running now!');
      }
@@ -868,7 +884,7 @@ app.delete('/deleteDomainMF/:domain', function(req, res) {
     try{
         updateFileDomainsStart(domains_START, queryDomain, line);
     }catch(errFile){
-        logger.info("Node-Red Manager. app.js-->REST Method: deleteDomainMF(). Error",errFile);
+        logger.error("Node-Red Manager. app.js-->REST Method: deleteDomainMF(). Error",errFile);
 
     }
 
@@ -894,12 +910,12 @@ app.delete('/deleteDomainMF/:domain', function(req, res) {
             delete listChildsRed[queryDomain];
 
         }catch(errChildProcess){
-            logger.info("Node-Red Manager. app.js-->REST Method: deleteDomainMF(). Error",errChildProcess);
+            logger.error("Node-Red Manager. app.js-->REST Method: deleteDomainMF(). Error",errChildProcess);
           }
 
        
     } else {
-        logger.info("Node-Red Manager. app.js-->REST Method: deleteDomainMF(). ChildProcess_PID not running now!")
+        logger.warn("Node-Red Manager. app.js-->REST Method: deleteDomainMF(). ChildProcess_PID not running now!")
         
     }
 	logger.info("Node-Red Manager. app.js-->REST Method: deleteDomainMF(). Ok");
@@ -923,7 +939,7 @@ app.get('/getAllDomainMF', function(req, res) {
             res.send(JSON.stringify(data)); 
         })   
      }catch(err){
-        logger.info("Node-Red Manager. app.js-->REST Method: getAllDomainMF(). Error",err);
+        logger.error("Node-Red Manager. app.js-->REST Method: getAllDomainMF(). Error",err);
         res.send(err);
      }
      
@@ -944,7 +960,7 @@ app.get('/getDomainStatusMF', function(req, res){
         res.send(strData);
     	})
  }catch(err){
-      logger.info("Node-Red Manager. app.js-->REST Method: getDomainStatusMF(). Error",err);
+      logger.error("Node-Red Manager. app.js-->REST Method: getDomainStatusMF(). Error",err);
       res.send(err);
    }
 });
@@ -971,7 +987,8 @@ app.get('/getDomainMF', function(req, res) {
                 port: line.toString().split('#')[1].split(':')[1],
                 home: line.toString().split('#')[2].split(':')[1],
                 servicePort: line.toString().split('#')[3].split(':')[1],
-                state: line.toString().split('#')[4].split(':')[1].substr(0,line.toString().split('#')[4].split(':')[1].length-1),
+                state: line.toString().split('#')[4].split(':')[1],
+                vertical: line.toString().split('#')[5].split(':')[1].substr(0,line.toString().split('#')[5].split(':')[1].length-1),
             }
 
         }
@@ -979,7 +996,7 @@ app.get('/getDomainMF', function(req, res) {
 		logger.info("Node-Red Manager. app.js-->REST Method: getDomainMF(). Respuesta: "+JSON.stringify(objectJSON)); 
         res.send(JSON.stringify(objectJSON)); 
     }catch(err){
-        logger.info("Node-Red Manager. app.js-->REST Method: getDomainMF(). Error",err);
+        logger.error("Node-Red Manager. app.js-->REST Method: getDomainMF(). Error",err);
         res.send(err);
 
     }
@@ -1006,7 +1023,8 @@ app.post('/synchronizeMF', function(req, res) {
             port: lst.listDomain[i].port,
             home: lst.listDomain[i].home,
             servicePort: lst.listDomain[i].servicePort,
-            state: lst.listDomain[i].state
+            state: lst.listDomain[i].state,
+            vertical: lst.listDomain[i].vertical
         }
         listSyncDomain[i] = objectSync;
     }
@@ -1049,7 +1067,7 @@ app.post('/synchronizeMF', function(req, res) {
     
 
     }catch(err){
-        logger.info("Node-Red Manager. app.js-->REST Method: synchronizeMF(). Error:",err);
+        logger.error("Node-Red Manager. app.js-->REST Method: synchronizeMF(). Error:",err);
         res.send(err);
     }
 
@@ -1098,10 +1116,65 @@ app.post('/stopMF', function(req, res) {
         //logger.info("Cierra el proceso");
         process.exit();
     }catch(err){
-        logger.info("Node-Red Manager. app.js-->REST Method: stopMF()",err);
+        logger.error("Node-Red Manager. app.js-->REST Method: stopMF()",err);
         res.send(err);
     }
 });
+
+
+if (process.env.PROMETHEUS_ENABLED == 'true'){
+
+    async function getMetrics(options) {
+        let metrics = await makeRequest(options);
+        return metrics;
+    } 
+
+    function makeRequest(options) {
+        return new Promise((resolve, reject) => {
+            http.get(options, function(res) {
+                let body = '';
+                res.on('data', function(chunk) {
+                    body += chunk;
+                });
+                res.on('end', function() {
+                    return resolve(body);
+                });
+            }).on('error', function(e) {
+                return reject(error);
+            });
+        });
+    }
+
+    app.get('/metrics', async (req, res, next) => {
+        res.setHeader('Content-Type', 'text/plain');
+
+        let allMetrics = '';
+        const domains = getAllDomain();
+
+        for await (const domain of domains) {
+            if (domain.runtimeState != undefined && domain.runtimeState == "START") { 
+                const options = {
+                    hostname: 'localhost',
+                    port: domain.port,
+                    path: '/' + domain.domain + '/metrics',
+                    method: 'GET',
+                    timeout: 5000
+                };
+
+                try {
+                    const metrics = await getMetrics(options);
+                    allMetrics += metrics;
+                } catch (e) {
+                    logger.error('Error obtaining metrics from domain: ' + domain.domain);
+                    logger.error(e);
+                    return next(e);
+                }
+            }
+        }
+
+        return res.send(allMetrics);
+    });
+}
 
 // Create a server
 var server = http.createServer(app);
@@ -1111,7 +1184,7 @@ server.listen(administrationPort);
 
 server.on('error', (e) => {
     if (e.code == 'EADDRINUSE') {
-        logger.info("Node-Red Manager. app.js. WARNING! The administration port: "+administrationPort+" is in use");
+        logger.warn("Node-Red Manager. app.js. WARNING! The administration port: "+administrationPort+" is in use");
         setTimeout(() => {
             server.listen(administrationPort);
         }, 1000);

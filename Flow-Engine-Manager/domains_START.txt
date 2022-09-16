@@ -1,1 +1,0 @@
-[Domain:adminDomain#Port:28000#Home:/tmp/administrator#servicePort:27000#Estado:START]
