@@ -1,111 +1,127 @@
 /* @flow */
+/* global FormData */
+/* global fetch */
 
-import {
-  EndpointDefinition,
-  StatusAnnouncement,
-} from '../../core/flow_interfaces';
-import { buildUrl } from '../utils';
+import { EndpointDefinition, StatusAnnouncement } from '../../core/flow_interfaces';
+import { postfile as postfilewebnode } from './web-node';
 
-declare var fetch: any;
-
-function log(url, qs, res) {
-  let _pickLogger = () => {
-    if (console && console.log) return console; // eslint-disable-line no-console
-    return console;
-  };
-
-  let start = new Date().getTime();
-  let timestamp = new Date().toISOString();
-  let logger = _pickLogger();
-  logger.log('<<<<<'); // eslint-disable-line no-console
-  logger.log(`[${timestamp}]`, '\n', url, '\n', qs); // eslint-disable-line no-console
-  logger.log('-----'); // eslint-disable-line no-console
-
-  let now = new Date().getTime();
-  let elapsed = now - start;
-  let timestampDone = new Date().toISOString();
-
-  logger.log('>>>>>>'); // eslint-disable-line no-console
-  logger.log(`[${timestampDone} / ${elapsed}]`, '\n', url, '\n', qs, '\n', res); // eslint-disable-line no-console
-  logger.log('-----');
-}
-
-function xdr(
-  method: string,
+async function postfileuri(
   url: string,
-  params: Object,
-  body: string,
-  endpoint: EndpointDefinition,
-  callback: Function
-): void {
-  let status: StatusAnnouncement = {};
-  status.operation = endpoint.operation;
+  fields: $ReadOnlyArray<{ key: string, value: string }>,
+  fileInput: any
+): Promise<any> {
+  const formData = new FormData();
 
-  fetch(buildUrl(url, params), { method, body })
-    .then((response) => {
-      status.error = false;
+  fields.forEach(({ key, value }) => {
+    formData.append(key, value);
+  });
 
-      if (response.status) {
-        status.statusCode = response.status;
+  formData.append('file', fileInput);
+
+  const result = await fetch(url, {
+    method: 'POST',
+    body: formData
+  });
+
+  return result;
+}
+
+export async function postfile(
+  url: string,
+  fields: $ReadOnlyArray<{ key: string, value: string }>,
+  fileInput: any
+): Promise<any> {
+  if (!fileInput.uri) {
+    return postfilewebnode(url, fields, fileInput);
+  } else {
+    return postfileuri(url, fields, fileInput);
+  }
+}
+
+export function getfile(params: Object, endpoint: EndpointDefinition, callback: Function): Promise<any> {
+  let url = this.getStandardOrigin() + endpoint.url;
+
+  if (params && Object.keys(params).length > 0) {
+    let searchParams = new URLSearchParams(params);
+
+    if (endpoint.url.indexOf('?') > -1) {
+      url += '&';
+    } else {
+      url += '?';
+    }
+
+    url += searchParams.toString();
+  }
+
+  let fetchResult = fetch(url, { method: 'GET', headers: endpoint.headers });
+
+  fetchResult.then(async (resp) => {
+    let parsedResponse;
+    let status: StatusAnnouncement = {};
+    status.error = false;
+    status.operation = endpoint.operation;
+
+    if (resp && resp.status) {
+      status.statusCode = resp.status;
+    }
+
+    if (endpoint.ignoreBody) {
+      parsedResponse = {
+        headers: resp.headers,
+        redirects: [],
+        response: resp,
+      };
+    } else {
+      try {
+        parsedResponse = JSON.parse(await resp.text());
+      } catch (e) {
+        status.errorData = resp;
+        status.error = true;
+        return callback(status, null);
       }
+    }
 
-      return response.json();
-    })
-    .then((response) => {
-      let resp = response;
-
-      if (this._config.logVerbosity) {
-        log(url, params, resp);
-      }
-
-      callback(status, resp);
-    })
-    .catch((e) => {
+    if (
+      parsedResponse.error &&
+      parsedResponse.error === 1 &&
+      parsedResponse.status &&
+      parsedResponse.message &&
+      parsedResponse.service
+    ) {
+      status.errorData = parsedResponse;
+      status.statusCode = parsedResponse.status;
       status.error = true;
-      status.errorData = e.error;
-      status.category = this._detectErrorCategory(e.error);
-      callback(status, null);
-    });
-}
+      status.category = this._detectErrorCategory(status);
+      return callback(status, null);
+    } else if (parsedResponse.error && parsedResponse.error.message) {
+      status.errorData = parsedResponse.error;
+    }
 
-export function get(
-  params: Object,
-  endpoint: EndpointDefinition,
-  callback: Function
-) {
-  let url = this.getStandardOrigin() + endpoint.url;
+    // returning the entire response in order to use response methods for
+    // reading the body in react native because the response.body
+    // is a ReadableStream which doesn't seem to be reliable on ios and android
+    return callback(status, { response: { body: resp } });
+  });
 
-  return xdr.call(this, 'GET', url, params, '', endpoint, callback);
-}
+  fetchResult.catch((err) => {
+    let status: StatusAnnouncement = {};
+    status.error = true;
+    status.operation = endpoint.operation;
 
-export function post(
-  params: Object,
-  body: string,
-  endpoint: EndpointDefinition,
-  callback: Function
-) {
-  let url = this.getStandardOrigin() + endpoint.url;
+    if (err.response && err.response.text && !this._config.logVerbosity) {
+      try {
+        status.errorData = JSON.parse(err.response.text);
+      } catch (e) {
+        status.errorData = err;
+      }
+    } else {
+      status.errorData = err;
+    }
 
-  return xdr.call(this, 'POST', url, params, body, endpoint, callback);
-}
+    status.category = this._detectErrorCategory(err);
 
-export function patch(
-  params: Object,
-  body: string,
-  endpoint: EndpointDefinition,
-  callback: Function
-) {
-  let url = this.getStandardOrigin() + endpoint.url;
+    return callback(status, null);
+  });
 
-  return xdr.call(this, 'PATCH', url, params, body, endpoint, callback);
-}
-
-export function del(
-  params: Object,
-  endpoint: EndpointDefinition,
-  callback: Function
-) {
-  let url = this.getStandardOrigin() + endpoint.url;
-
-  return xdr.call(this, 'DELETE', url, params, '', endpoint, callback);
+  return fetchResult;
 }

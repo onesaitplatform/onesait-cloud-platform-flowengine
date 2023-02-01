@@ -1,0 +1,1 @@
+cmd_Release/obj.target/omr-agentcore/libmemoryplugin.so := g++ -shared -pthread -rdynamic -m64  -Wl,-soname=libmemoryplugin.so -o Release/obj.target/omr-agentcore/libmemoryplugin.so -Wl,--whole-archive ./Release/obj.target/memoryplugin/omr-agentcore/src/ibmras/monitoring/plugins/common/memory/MemoryPlugin.o -Wl,--no-whole-archive 

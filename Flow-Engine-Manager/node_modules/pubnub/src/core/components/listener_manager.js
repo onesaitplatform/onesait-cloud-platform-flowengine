@@ -7,6 +7,7 @@ import {
   ObjectAnnouncement,
   CallbackStruct,
   PresenceAnnouncement,
+  FileAnnouncement
 } from '../flow_interfaces';
 import categoryConstants from '../constants/categories';
 
@@ -62,6 +63,18 @@ export default class {
   announceMessageAction(announce: MessageActionAnnouncement) {
     this._listeners.forEach((listener) => {
       if (listener.messageAction) listener.messageAction(announce);
+    });
+  }
+
+  announceFile(announce: FileAnnouncement) {
+    this._listeners.forEach((listener) => {
+      if (listener.file) listener.file(announce);
+    });
+  }
+
+  announceObjects(announce: ObjectAnnouncement) {
+    this._listeners.forEach((listener) => {
+      if (listener.objects) listener.objects(announce);
     });
   }
 

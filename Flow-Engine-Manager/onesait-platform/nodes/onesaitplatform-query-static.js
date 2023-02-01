@@ -32,6 +32,9 @@ module.exports = function(RED) {
 					msg.ok=false;
 				}
 				msg.payload=data;
+				if (Buffer.isBuffer(msg.payload)){
+                    msg.payload = msg.payload.toString();
+                }
 				node.send(msg);
 			});
 			req.on('requestTimeout', function (req) {

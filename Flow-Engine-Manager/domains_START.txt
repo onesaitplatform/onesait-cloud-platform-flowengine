@@ -1,0 +1,2 @@
+[Domain:devDomain#Port:8001#Home:/tmp/developer#servicePort:7001#Estado:START#Vertical:onesaitplatform_config]
+[Domain:adminDomain#Port:8000#Home:/tmp/administrator#servicePort:7000#Estado:START#Vertical:onesaitplatform_config]

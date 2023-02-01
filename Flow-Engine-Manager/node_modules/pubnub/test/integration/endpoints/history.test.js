@@ -61,6 +61,7 @@ describe('history endpoints', () => {
       subscribeKey,
       publishKey,
       uuid: 'myUUID',
+      useRandomIVs: false
     });
   });
 
@@ -142,5 +143,29 @@ describe('history endpoints', () => {
         done();
       });
     });
+  }).timeout(60000);
+
+  it('should add history API telemetry information', (done) => {
+    nock.disableNetConnect();
+    let scope = utils.createNock().get(`/v2/history/sub-key/${subscribeKey}/channel/ch1`).query(true);
+    const delays = [100, 200, 300, 400];
+    const countedDelays = delays.slice(0, delays.length - 1);
+    const average = Math.floor(countedDelays.reduce((acc, delay) => acc + delay, 0) / countedDelays.length);
+    const leeway = 50;
+
+    utils.runAPIWithResponseDelays(scope,
+      200,
+      '[[{"message":{"text":"hey"},"timetoken":"14648503433058358"},{"message":{"text2":"hey2"},"timetoken":"14648503433058359"}],"14648503433058358","14649346364851578"]',
+      delays,
+      (completion) => {
+        pubnub.history(
+          { channel: 'ch1', stringifiedTimeToken: true },
+          () => { completion(); }
+        );
+      })
+      .then((lastRequest) => {
+        utils.verifyRequestTelemetry(lastRequest.path, 'l_hist', average, leeway);
+        done();
+      });
   }).timeout(60000);
 });
