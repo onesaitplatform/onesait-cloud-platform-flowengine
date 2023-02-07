@@ -23,14 +23,14 @@ gelfLog.setConfig({
   broadcast: [], // optional; listeners of a message
   levels: {trace:10, debug:20, info: 30, warn:40, error: 50, fatal:60}, // optional; default: see the levels section below
   aliases: {}, // optional; default: see the aliases section below
-  adapterName: 'tcp', // optional; currently supported "udp", "tcp" and "tcp-tls"; default: udp
+  adapterName: 'udp', // optional; currently supported "udp", "tcp" and "tcp-tls"; default: udp
   adapterOptions: { // this object is passed to the adapter.connect() method
     // common
     host: '${GRAYLOG_HOST}', // optional; default: 127.0.0.1
     port: ${GRAYLOG_PORT}, // optional; default: 12201
     // tcp adapter example
-    family: 4, // tcp only; optional; version of IP stack; default: 4
-    timeout: 1000 // tcp only; optional; default: 10000 (10 sec)
+    // family: 4, // tcp only; optional; version of IP stack; default: 4
+    // timeout: 1000 // tcp only; optional; default: 10000 (10 sec)
 
   }
 });
@@ -59,7 +59,7 @@ ${COMMENT_PROXY_END}
         // Timeout in milliseconds for HTTP request connections
         httpRequestTimeout: ${HTTPREQUESTTIMEOUT},
         socketTimeout: ${SOCKETTIMEOUT},
-        httpStatic: "/opt/nodeRed/Flow-Engine-Manager/public/",
+        httpStatic: [{path:'/opt/nodeRed/Flow-Engine-Manager/public/'}],
         nodesDir: "/opt/nodeRed/Flow-Engine-Manager/onesait-platform/nodes/",
 	    // enables global context
 	    editorTheme: {
@@ -206,7 +206,7 @@ function stats(pid) {
     		if(pid==null){
                   resolve({});
             }
-    		pusage.stat(pid, (err, data) => {
+    		pusage(pid, (err, data) => {
                 if (err) {
                     reject(err)
                 }

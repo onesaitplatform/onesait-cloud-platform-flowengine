@@ -1,0 +1,106 @@
+[{
+        "thresholds": [{
+            "severity": 4,
+            "condition": {
+                "${metrics.averageResponseTime}": {
+                    "$gte": 500
+                }
+            },
+            "history": {
+                "$items": {
+                    "averageResponseTime": "${metrics.averageResponseTime}",
+                    "timestamp": "${timestamp}"
+                },
+                "$size": 1
+            }
+        },{
+            "severity": 1,
+            "condition": {
+                "${metrics.averageResponseTime}": {
+                    "$gte": 2000
+                }
+            },
+            "counter": {
+                "$latest": 3,
+                "$counter": 3
+            },
+            "history": {
+                "$items": {
+                    "averageResponseTime": "${metrics.averageResponseTime}",
+                    "timestamp": "${timestamp}"
+                },
+                "$size": 1
+            }
+        }],
+        "subject":[],
+        "label": "Node.js_Average_Response_Time_High",
+        "description": "Node.js Application Average Response Time High",
+        "evaluationPoint": "rte",
+        "resourceType": "nodeApplicationRuntime",
+        "version": "0.8"
+    },
+    {
+        "thresholds": [{
+            "severity": 1,
+            "condition": {
+                "${metrics.slowestResponseTime}": {
+                    "$gte": 5000
+                }
+            },
+            "history": {
+                "$items": {
+                    "slowestResponseTime": "${metrics.slowestResponseTime}",
+                    "timestamp": "${timestamp}"
+                },
+                "$size": 1
+            }
+        },{
+            "severity": 4,
+            "condition": {
+                "${metrics.slowestResponseTime}": {
+                    "$gte": 2000
+                }
+            },
+            "history": {
+                "$items": {
+                    "slowestResponseTime": "${metrics.slowestResponseTime}",
+                    "timestamp": "${timestamp}"
+                },
+                "$size": 1
+            }
+        }],
+        "subject":[],
+        "label": "Node.js_Slowest_Response_Time_High",
+        "description": "Node.js Application Slowest Response Time High",
+        "evaluationPoint": "rte",
+        "resourceType": "nodeApplicationRuntime",
+        "version": "0.8"
+    },
+    {
+        "thresholds": [{
+            "severity": 1,
+            "condition": {
+                "${metrics.averageServiceResponseTime}": {
+                    "$gte": 5000
+                }
+            },
+            "history": {
+                "$items": {
+                    "averageServiceResponseTime": "${metrics.averageServiceResponseTime}",
+                    "requestName": "${tags.requestName}",
+                    "requestType": "${tags.requestType}",
+                    "timestamp": "${timestamp}"
+                },
+                "$size": 1
+            }
+        }],
+        "subject":[{
+            "id": "${tags.requestType}:${tags.requestName}"
+        }],
+        "label": "Node.js_Request_Slow",
+        "description": "Node.js Request Slow",
+        "evaluationPoint": "rte",
+        "resourceType": "nodeApplicationRuntime",
+        "version": "0.8"
+    }
+]

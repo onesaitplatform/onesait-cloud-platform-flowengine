@@ -51,7 +51,7 @@ module.exports = function(RED) {
                     msg.payload=data;
                 }else if(response.statusCode == 403 || response.statusCode == 404){
                     msg.ok=false;
-                    msg.payload=data;
+                    msg.payload=data.toString();
                 } else {
                     msg.ok=false;
                     msg.payload={"error":"Error starting dataflow. Is it already running?. Please check its status before starting dataflow."};

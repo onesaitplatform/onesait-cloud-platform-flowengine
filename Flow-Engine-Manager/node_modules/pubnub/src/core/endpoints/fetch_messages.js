@@ -67,19 +67,30 @@ export function prepareParams(
   incomingParams: FetchMessagesArguments
 ): Object {
   const {
+    channels,
     start,
     end,
+    includeMessageActions,
     count,
     stringifiedTimeToken = false,
     includeMeta = false,
+    includeUuid,
+    includeUUID = true,
+    includeMessageType = true
   } = incomingParams;
   let outgoingParams: Object = {};
 
-  if (count) outgoingParams.max = count;
+  if (count) {
+    outgoingParams.max = count;
+  } else {
+    outgoingParams.max = (channels.length > 1 || includeMessageActions === true) ? 25 : 100;
+  }
   if (start) outgoingParams.start = start;
   if (end) outgoingParams.end = end;
   if (stringifiedTimeToken) outgoingParams.string_message_token = 'true';
   if (includeMeta) outgoingParams.include_meta = 'true';
+  if (includeUUID && includeUuid !== false) outgoingParams.include_uuid = 'true';
+  if (includeMessageType) outgoingParams.include_message_type = 'true';
 
   return outgoingParams;
 }
@@ -100,6 +111,8 @@ export function handleResponse(
       announce.channel = channelName;
       announce.timetoken = messageEnvelope.timetoken;
       announce.message = __processMessage(modules, messageEnvelope.message);
+      announce.messageType = messageEnvelope.message_type;
+      announce.uuid = messageEnvelope.uuid;
 
       if (messageEnvelope.actions) {
         announce.actions = messageEnvelope.actions;
@@ -114,6 +127,9 @@ export function handleResponse(
       response.channels[channelName].push(announce);
     });
   });
+  if (serverResponse.more) {
+    response.more  = serverResponse.more;
+  }
 
   return response;
 }

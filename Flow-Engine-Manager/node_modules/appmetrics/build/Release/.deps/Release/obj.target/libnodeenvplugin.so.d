@@ -1,0 +1,1 @@
+cmd_Release/obj.target/libnodeenvplugin.so := g++ -shared -pthread -rdynamic -m64  -Wl,-soname=libnodeenvplugin.so -o Release/obj.target/libnodeenvplugin.so -Wl,--whole-archive ./Release/obj.target/nodeenvplugin/src/plugins/node/env/nodeenvplugin.o -Wl,--no-whole-archive 

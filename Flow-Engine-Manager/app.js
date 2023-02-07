@@ -25,7 +25,7 @@ var cp = require('child_process');
 const GelfTransport = require('winston-gelf');
 var winston = require('winston')
  
-${COMMENT_GRAYLOG_START}
+/*${COMMENT_GRAYLOG_START}
   const options = {
     gelfPro: {
         fields: {app_name: "NodeRED", domain: "app.js"}, // optional; default fields for all messages
@@ -49,14 +49,14 @@ ${COMMENT_GRAYLOG_START}
  
   const gelfTransport = new GelfTransport(options);
  
-${COMMENT_GRAYLOG_END}
+${COMMENT_GRAYLOG_END}*/
   const logger = winston.createLogger({
     transports: [
       new winston.transports.Console()
-    ${COMMENT_GRAYLOG_START}
+    /*${COMMENT_GRAYLOG_START}
       , gelfTransport
       
-    ${COMMENT_GRAYLOG_END}
+    ${COMMENT_GRAYLOG_END}*/
     ]
   });
 
@@ -260,7 +260,7 @@ function stats(pid, listAllDomain, i) {
     		if(pid==null){
                   resolve(listAllDomain[i]);
             }
-    		pusage.stat(pid, (err, data) => {
+    		pusage(pid, (err, data) => {
                 if (err) {
                     reject(err)
                 }
@@ -296,7 +296,7 @@ function deleteDomainData(pid, queryDomain){
         childProcess.send({
             msg: 'stop'
         });
-        pusage.unmonitor(listChildsRed[queryDomain].pid);
+        //pusage.unmonitor(listChildsRed[queryDomain].pid);
     }catch(e){
 
     logger.error("Node-Red Manager. app.js-->REST Method: stopDomainMF(). ALREADY STOPPED ChildProcess_PID: " + pid);
@@ -672,6 +672,7 @@ app.post('/createDomainMF', function(req, res) {
     var port = req.body.port;
     var home = req.body.home;
     var servicePort = req.body.servicePort;
+    var vertical = req.body.vertical;
 
     //Comprobar si el puerto esta usado ya
 
@@ -826,7 +827,7 @@ app.put('/stopDomainMF/:domain', function(req, res) {
                     msg: 'stop'
                 });
                 
-                pusage.unmonitor(listChildsRed[queryDomain].pid);
+                //pusage.unmonitor(listChildsRed[queryDomain].pid);
                 delete listChildsRed[queryDomain];
                 
 
@@ -906,7 +907,7 @@ app.delete('/deleteDomainMF/:domain', function(req, res) {
                 childProcess.kill('SIGINT');
             }, 1000);
             
-            pusage.unmonitor(listChildsRed[queryDomain].pid);
+            //pusage.unmonitor(listChildsRed[queryDomain].pid);
             delete listChildsRed[queryDomain];
 
         }catch(errChildProcess){
@@ -1045,7 +1046,7 @@ app.post('/synchronizeMF', function(req, res) {
                 processToKill.kill('SIGINT');
             }, 1000);
             
-            pusage.unmonitor(listChildsRed[queryDomain].pid);
+            //pusage.unmonitor(listChildsRed[queryDomain].pid);
             delete listChildsRed[queryDomain];
             
         }
@@ -1098,7 +1099,7 @@ app.post('/stopMF', function(req, res) {
             
            // pusage.unmonitor(listChildsRed[queryDomain].pid);
            // delete listChildsRed[queryDomain];
-           pusage.unmonitor(listChildsRed[childProcess].pid);
+           //pusage.unmonitor(listChildsRed[childProcess].pid);
            delete listChildsRed[childProcess];
             }
         }
@@ -1121,7 +1122,7 @@ app.post('/stopMF', function(req, res) {
     }
 });
 
-
+/*
 if (process.env.PROMETHEUS_ENABLED == 'true'){
 
     async function getMetrics(options) {
@@ -1175,7 +1176,7 @@ if (process.env.PROMETHEUS_ENABLED == 'true'){
         return res.send(allMetrics);
     });
 }
-
+*/
 // Create a server
 var server = http.createServer(app);
 server.listen(administrationPort);
