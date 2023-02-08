@@ -25,38 +25,9 @@ var cp = require('child_process');
 const GelfTransport = require('winston-gelf');
 var winston = require('winston')
  
-/*${COMMENT_GRAYLOG_START}
-  const options = {
-    gelfPro: {
-        fields: {app_name: "NodeRED", domain: "app.js"}, // optional; default fields for all messages
-        filter: [], // optional; filters to discard a message
-        transform: [], // optional; transformers for a message
-        broadcast: [], // optional; listeners of a message
-        levels: {trace:10, debug:20, info: 30, warn:40, error: 50, fatal:60}, // optional; default: see the levels section below
-        aliases: {}, // optional; default: see the aliases section below
-        adapterName: 'tcp', // optional; currently supported "udp", "tcp" and "tcp-tls"; default: udp
-        adapterOptions: { // this object is passed to the adapter.connect() method
-            // common
-            host: '${GRAYLOG_HOST}', // optional; default: 127.0.0.1
-            port: ${GRAYLOG_PORT}, // optional; default: 12201
-            // tcp adapter example
-            family: 4, // tcp only; optional; version of IP stack; default: 4
-            timeout: 1000 // tcp only; optional; default: 10000 (10 sec)     
-    }
-  }
-      
-}
- 
-  const gelfTransport = new GelfTransport(options);
- 
-${COMMENT_GRAYLOG_END}*/
   const logger = winston.createLogger({
     transports: [
       new winston.transports.Console()
-    /*${COMMENT_GRAYLOG_START}
-      , gelfTransport
-      
-    ${COMMENT_GRAYLOG_END}*/
     ]
   });
 
