@@ -118,6 +118,11 @@ module.exports = function(RED) {
                 if(err){
                 	msg.payload="error";
                     //console.log("timestamp: ",new Date().getTime(), ", domain: ", process.env.domain, ", nodeId: ", n.id, ", msgid: ", msg._msgid, ", operation: Notebook Launcher, message: ", err);
+					var logMsg={
+						"msgid":msg._msgid,
+						"message": err
+					}
+					node.log(logMsg);
                     node.send(msg);
                 }else{
                 	var results = JSON.parse(body.toString());

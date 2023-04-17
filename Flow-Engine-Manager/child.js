@@ -12,6 +12,36 @@ var app = express();
 // Add a simple route for static content served from 'public'
 app.use("/",express.static("public"));
 
+const transformer = function transformer(logData) {
+  const transformed = logData;
+    switch(transformed.level){
+        case 10:
+            transformed.level_name="FATAL"
+            break;
+        case 20:
+            transformed.level_name="ERROR"
+            break; 
+        case 30:
+            transformed.level_name="WARN"
+            break;
+        case 40:
+            transformed.level_name="INFO"
+            break;
+        case 50:
+            transformed.level_name="DEBUG"
+            break;
+        case 60:
+            transformed.level_name="TRACE"
+            break; 
+        case 98:
+            transformed.level_name="AUDIT"
+            break; 
+        case 99:
+            transformed.level_name="METRIC"
+            break; 
+    }
+  return transformed;
+};
 
 // GELF configuration
 ${COMMENT_GRAYLOG_START}
@@ -19,9 +49,9 @@ var gelfLog = require('gelf-pro');
 gelfLog.setConfig({
   fields: {app_name: "NodeRED", domain: domain}, // optional; default fields for all messages
   filter: [], // optional; filters to discard a message
-  transform: [], // optional; transformers for a message
+  transform: [transformer], // optional; transformers for a message
   broadcast: [], // optional; listeners of a message
-  levels: {trace:10, debug:20, info: 30, warn:40, error: 50, fatal:60}, // optional; default: see the levels section below
+  levels: {trace:60, debug:50, info: 40, warn:30, error: 20, fatal:10}, // optional; default: see the levels section below
   aliases: {}, // optional; default: see the aliases section below
   adapterName: 'udp', // optional; currently supported "udp", "tcp" and "tcp-tls"; default: udp
   adapterOptions: { // this object is passed to the adapter.connect() method
@@ -115,15 +145,26 @@ ${COMMENT_PROXY_END}
 		    }
 		},
         ${COMMENT_END}
-        ${COMMENT_GRAYLOG_START}
 	    logging: {
             console: {
                 level: "info",
                 metrics: false,
-                audit: false
-            },
+                audit: false,
+                handler: function(settings) {
+                    // Called when the logger is initialised
+
+                    // Return the logging function
+                    return function(msg) {
+                        msg=transformer(msg)
+                        msg.domain=domain
+                        msg.timestampISO=(new Date(msg.timestamp)).toISOString()
+                        console.log(JSON.stringify(msg))
+                    }
+                }
+            }
              // Custom GELF logger
-            myCustomLogger: {
+            ${COMMENT_GRAYLOG_START}
+            ,myCustomGelfLogger: {
                 level: 'info',
                 audit: false,
                 metrics: false,
@@ -132,12 +173,13 @@ ${COMMENT_PROXY_END}
 
                     // Return the logging function
                     return function(msg) {
-                        gelfLog.message(msg.msg,msg.level);
+                        msg.timestampISO=(new Date(msg.timestamp)).toISOString()
+                        gelfLog.message(JSON.stringify(msg),msg.level);
                     }
                 }
             }
+            ${COMMENT_GRAYLOG_END}
         }
-        ${COMMENT_GRAYLOG_END}
 	};
 
 

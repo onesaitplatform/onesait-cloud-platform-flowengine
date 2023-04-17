@@ -24,10 +24,71 @@ var cp = require('child_process');
 
 const GelfTransport = require('winston-gelf');
 var winston = require('winston')
+ const transformer = function transformer(logData) {
+  const transformed = logData;
+    switch(transformed.level){
+        case 0:
+            transformed.level_name="emerg"
+            break;
+        case 1:
+            transformed.level_name="alert"
+            break; 
+        case 2:
+            transformed.level_name="crit"
+            break;
+        case 3:
+            transformed.level_name="error"
+            break;
+        case 4:
+            transformed.level_name="warn"
+            break;
+        case 5:
+            transformed.level_name="notice"
+            break; 
+        case 6:
+            transformed.level_name="info"
+            break; 
+        case 7:
+            transformed.level_name="debug"
+            break; 
+    }
+  return transformed;
+};
+
+/*${COMMENT_GRAYLOG_START}
+  const options = {
+    gelfPro: {
+        fields: {app_name: "NodeRED", domain: "app.js"}, // optional; default fields for all messages
+        filter: [], // optional; filters to discard a message
+        transform: [transformer], // optional; transformers for a message
+        broadcast: [], // optional; listeners of a message
+        //levels: {trace:60, debug:50, info: 40, warn:30, error: 20, fatal:10}, // optional; default: see the levels section below
+        aliases: {}, // optional; default: see the aliases section below
+        adapterName: 'udp', // optional; currently supported "udp", "tcp" and "tcp-tls"; default: udp
+        adapterOptions: { // this object is passed to the adapter.connect() method
+            // common
+            //host: '${GRAYLOG_HOST}', // optional; default: 127.0.0.1
+            //port: ${GRAYLOG_PORT}, // optional; default: 12201
+            host: 'localhost', // optional; default: 127.0.0.1
+            port: 12201, // optional; default: 12201
+            // tcp adapter example
+            //family: 4, // tcp only; optional; version of IP stack; default: 4
+            //timeout: 1000 // tcp only; optional; default: 10000 (10 sec)     
+    }
+  }
+      
+}
  
+  const gelfTransport = new GelfTransport(options);
+ 
+/*${COMMENT_GRAYLOG_END}*/
   const logger = winston.createLogger({
     transports: [
       new winston.transports.Console()
+    /*${COMMENT_GRAYLOG_START}
+      , gelfTransport
+      
+    /*${COMMENT_GRAYLOG_END}*/
     ]
   });
 
@@ -907,7 +968,11 @@ app.get('/getAllDomainMF', function(req, res) {
 	logger.info("Node-Red Manager. app.js-->REST Method: getAllDomainMF()");
      try{
         showListAllDomain(getAllDomain()).then(function(data) {
-			logger.info("Node-Red Manager. app.js-->REST Method: getAllDomainMF(). Respuesta:"+JSON.stringify(data));
+			var logObject={
+                "timestampISO":(new Date()).toISOString(),
+                "data":data
+            }
+			logger.info("Node-Red Manager. app.js-->REST Method: getAllDomainMF(). Respuesta:"+JSON.stringify(logObject));
             res.send(JSON.stringify(data)); 
         })   
      }catch(err){
@@ -1018,7 +1083,7 @@ app.post('/synchronizeMF', function(req, res) {
             }, 1000);
             
             //pusage.unmonitor(listChildsRed[queryDomain].pid);
-            delete listChildsRed[queryDomain];
+            delete listChildsRed[childProcess];
             
         }
     }

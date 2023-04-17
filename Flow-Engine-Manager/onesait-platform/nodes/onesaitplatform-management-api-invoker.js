@@ -103,7 +103,12 @@ module.exports = function(RED) {
                         node.error(err,msg);
                         node.status({fill:"red", shape:"ring", text:err.code});
                     }
-                    console.log("timestamp: ",new Date().getTime(), ", domain: ", process.env.domain, ", nodeId: ", n.id, ", msgid: ", msg._msgid, ", operation: onesaitplatform-management-Rest-API-invoker, message: ", err.code);
+                    //console.log("timestamp: ",new Date().getTime(), ", domain: ", process.env.domain, ", nodeId: ", n.id, ", msgid: ", msg._msgid, ", operation: onesaitplatform-management-Rest-API-invoker, message: ", err.code);
+                    var logMsg={
+                        "msgid":msg._msgid,
+                        "message": err.code
+                    }
+                    node.error(logMsg);
                     msg.payload = err.toString() + " : " + endpoint;
                     msg.statusCode = err.code;
                     msg.ok=false;
@@ -120,7 +125,12 @@ module.exports = function(RED) {
                         if(Buffer.isBuffer(msg.payload)){
                             msg.payload = msg.payload.toString("UTF-8");
                         }
-                        console.log("timestamp: ",new Date().getTime(), ", domain: ", process.env.domain, ", nodeId: ", n.id, ", msgid: ", msg._msgid, ", operation: onesaitplatform-management-Rest-API-invoker, message: ", "Body response was not a JSON.");
+                        //console.log("timestamp: ",new Date().getTime(), ", domain: ", process.env.domain, ", nodeId: ", n.id, ", msgid: ", msg._msgid, ", operation: onesaitplatform-management-Rest-API-invoker, message: ", "Body response was not a JSON.");
+                        var logMsg={
+                            "msgid":msg._msgid,
+                            "message": "Body response was not a JSON."
+                        }
+                        node.error(logMsg);
                         node.status({fill:"red", shape:"ring", text:"Body response was not a JSON."});
                         //node.warn(RED._("httpin.errors.json-error")); 
                     }
@@ -141,7 +151,13 @@ module.exports = function(RED) {
                             }
                         }
                     });
-                    console.log("timestamp: ",new Date().getTime(), ", domain: ", process.env.domain, ", nodeId: ", n.id, ", msgid: ", msg._msgid, ", operation: onesaitplatform-management-Rest-API-invoker, message: Status code ", res.statusCode);
+                    //console.log("timestamp: ",new Date().getTime(), ", domain: ", process.env.domain, ", nodeId: ", n.id, ", msgid: ", msg._msgid, ", operation: onesaitplatform-management-Rest-API-invoker, message: Status code ", res.statusCode);
+                    var logMsg={
+                        //"timestamp":new Date().getTime(),
+                        "msgid":msg._msgid,
+                        "message": "Status code "+ res.statusCode
+                    }
+                    node.log(logMsg);
                     node.status({});
                     node.send(msgToSend);
                 }

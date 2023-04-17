@@ -24,11 +24,15 @@ module.exports = {
 	notifyNodes: function(flows, deployRes, version, data){
 		var domainObject={'domain': domain};
         
-        console.log("OnesaitPlatform flows DOMAIN: "+JSON.stringify(domainObject));
+        //console.log("OnesaitPlatform flows DOMAIN: "+JSON.stringify(domainObject));
 		flows.unshift(domainObject);
         
-        console.log("OnesaitPlatform flows deploy: "+JSON.stringify(flows));
-		
+        //console.log("OnesaitPlatform flows deploy: "+JSON.stringify(flows));
+		var logMsg={
+			"operation": "Deploy",
+			"message": "OnesaitPlatform flows deploy: "+JSON.stringify(flows)
+		}
+		node.info(logMsg);
 		//Enviar al servicio REST del modulo Script
 		//El módulo flowengine filtrará los flujos y extraerá los nodos propios de Onesait Platform con su configuracion
 		
@@ -47,12 +51,22 @@ module.exports = {
 		// do the POST call
 		
 		var reqPost = http.request(options, function(res) {
-			console.log("statusCode: ", res.statusCode);
+			//console.log("statusCode: ", res.statusCode);
+			var logMsg={
+				"operation": "Deploy",
+				"message": "OnesaitPlatform flows deployment call: "+res.statusCode
+			}
+			node.info(logMsg);
 		 	if(res.statusCode == 200){
 				res.on('data', function(d) {
-					console.info('POST result:\n');
+					//console.info('POST result:\n');
 					process.stdout.write(d);
-					console.info('\n\nPOST completed');
+					//console.info('\n\nPOST completed');
+					var logMsg={
+						"operation": "Deploy",
+						"message": "OnesaitPlatform flows deployment call POST result: "+d
+					}
+					node.info(logMsg);
 					if (version === "v1") {
 					    deployRes.status(204).end();
 					} else if (version === "v2") {
@@ -62,9 +76,14 @@ module.exports = {
 				});
 			} else {
 				res.on('data', function(d) {
-					console.info('POST error: '+d+'\n');
+					//console.info('POST error: '+d+'\n');
 					process.stdout.write(d);
-					console.info('\n\nPOST completed');
+					//console.info('\n\nPOST completed');
+					var logMsg={
+						"operation": "Deploy",
+						"message": "OnesaitPlatform flows deployment call POST result: "+d
+					}
+					node.error(logMsg);
 					try{
 						deployRes.status(500).json({error:JSON.parse(d).error, message:JSON.parse(d).message});
 					}catch(e){
@@ -76,7 +95,12 @@ module.exports = {
 		reqPost.write(JSON.stringify(flows));
 		reqPost.end();
 		reqPost.on('error', function(e) {
-			console.error(e);
+			//console.error(e);
+			var logMsg={
+				"operation": "Deploy",
+				"message": "Error while calling OnesaitPlatform flows deployment: "+e
+			}
+			node.error(logMsg);
 		});
 
 		//NEW sync deployment request
