@@ -104,7 +104,12 @@ module.exports = function(RED) {
             var endpoint = platformConfig.scriptBasePath + "/flowengine/node/services/user/audit";
             var req = client.post(endpoint, args,function (data, response) {
                 // parsed response body as js object 
-                console.log("statusCode: ", response.statusCode);
+                //console.log("statusCode: ", response.statusCode);
+                var logMsg={
+                    "msgid":msg._msgid,
+                    "message": "Status code "+ response.statusCode
+                }
+                node.log(logMsg);
                 if(response.statusCode== 200){
                     msg.ok=true;
                 }else{
@@ -115,13 +120,22 @@ module.exports = function(RED) {
             });
             req.on('requestTimeout', function (req) {
                 msg.ok=false;
-                console.log("request has expired");
+                var logMsg={
+                    "msgid":msg._msgid,
+                    "message": "Error, request has expired"
+                }
+                node.error(logMsg);
                 req.abort();
             });
              
             req.on('responseTimeout', function (res) {
                 msg.ok=false;
-                console.log("response has expired");
+                //console.log("response has expired");
+                var logMsg={
+                    "msgid":msg._msgid,
+                    "message": "Error, response has expired"
+                }
+                node.error(logMsg);
             });
             //DEFAULT DEBUG
             if (this.complete === "true") {

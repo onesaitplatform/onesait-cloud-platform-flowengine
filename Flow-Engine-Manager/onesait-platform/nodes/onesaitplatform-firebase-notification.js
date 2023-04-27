@@ -30,7 +30,12 @@ module.exports = function(RED) {
         //if (process.env.http_proxy) { proxyUrl = process.env.http_proxy;}
         //if (process.env.HTTP_PROXY) { proxyUrl = process.env.HTTP_PROXY;}
         if (n.proxy) {
-            console.log("Entering FIREBASE Proxy config");
+            //console.log("Entering FIREBASE Proxy config");
+			 var logMsg={
+				"msgid":msg._msgid,
+				"message": "Entering FIREBASE Proxy config"
+			}
+			node.log(logMsg);
             var proxyConfig = RED.nodes.getNode(n.proxy);
             proxyUrl = proxyConfig.url;
             //noprox = proxyConfig.noproxy;
@@ -38,7 +43,12 @@ module.exports = function(RED) {
             proxyHost = proxyUrl.split("//")[1].split(":")[0];
             proxyPort = proxyUrl.split("//")[1].split(":")[1];
             if(proxyConfig.credentials.username && proxyConfig.credentials.username != undefined && proxyConfig.credentials.username!== ""){
-                console.log("... Proxy User IS defined. "+proxyUrl+ " - "+proxyHost+" - "+proxyPort);
+                //console.log("... Proxy User IS defined. "+proxyUrl+ " - "+proxyHost+" - "+proxyPort);
+				var logMsg={
+					"msgid":msg._msgid,
+					"message": "Proxy User IS defined. "+proxyUrl+ " - "+proxyHost+" - "+proxyPort
+				}
+				node.log(logMsg);
                 proxyAgent = tunnel.httpsOverHttp({
                 proxy: {
                     host: proxyHost,
@@ -47,7 +57,12 @@ module.exports = function(RED) {
                 }
                 });
             }else{ 
-                console.log("... Proxy User NOT defined. "+proxyUrl+ " - "+proxyHost+" - "+proxyPort);
+                //console.log("... Proxy User NOT defined. "+proxyUrl+ " - "+proxyHost+" - "+proxyPort);
+				var logMsg={
+					"msgid":msg._msgid,
+					"message": "Proxy User NOT defined. "+proxyUrl+ " - "+proxyHost+" - "+proxyPort
+				}
+				node.log(logMsg);
                 proxyAgent = tunnel.httpsOverHttp({
                 proxy: {
                     host: proxyHost,
@@ -67,17 +82,32 @@ module.exports = function(RED) {
                     httpAgent: proxyAgent
 			});
 			if(app.name == '[DEFAULT]'){
-				node.log('OK');
+				//node.log('OK');
+				var logMsg={
+					"msgid":msg._msgid,
+					"message": "OK"
+				}
+				node.log(logMsg);
 				this.status({fill:"green",shape:"dot",text:"connected"});
 				appStarted = true;
 			}else{
-				node.log('KO');
+				//node.log('KO');
+				var logMsg={
+					"msgid":msg._msgid,
+					"message": "KO"
+				}
+				node.log(logMsg);
 				this.status({fill:"red",shape:"dot",text:"Not connected"});
 			}
 		}catch(err){
-            console.log(err);
-            console.log("Error creating FIREBASE client: "+JSON.stringify(err));
-			node.log('Unable to create Firebase client.');
+            //console.log(err);
+            //console.log("Error creating FIREBASE client: "+JSON.stringify(err));
+			var logMsg={
+				"msgid":msg._msgid,
+				"message": "Error creating FIREBASE client: "+JSON.stringify(err)
+			}
+			node.error(logMsg);
+			node.error('Unable to create Firebase client.');
 			this.status({fill:"red",shape:"dot",text:"Not connected"});
 			appStarted = false;
 		}
@@ -97,7 +127,12 @@ module.exports = function(RED) {
 					rebootFirebaseApp = true
 				} else {
 					this.status({fill:"red",shape:"dot",text:"Project ID for firebase not defined."});
-					node.error("Project ID for firebase not defined.");
+					//node.error("Project ID for firebase not defined.");
+					var logMsg={
+						"msgid":msg._msgid,
+						"message": "Project ID for firebase not defined."
+					}
+					node.error(logMsg);
 					msg.payload="Project ID for firebase not defined..";
 					msg.error=true;
 					node.send(msg);
@@ -110,7 +145,12 @@ module.exports = function(RED) {
 					rebootFirebaseApp = true
 				} else {
 					this.status({fill:"red",shape:"dot",text:"Client email for firebase not defined."});
-					node.error("Client email for firebase not defined.");
+					//node.error("Client email for firebase not defined.");
+					var logMsg={
+						"msgid":msg._msgid,
+						"message": "Client email for firebase not defined."
+					}
+					node.error(logMsg);
 					msg.payload="Client email for firebase not defined..";
 					msg.error=true;
 					node.send(msg);
@@ -123,7 +163,12 @@ module.exports = function(RED) {
 					rebootFirebaseApp = true
 				} else {
 					this.status({fill:"red",shape:"dot",text:"Private key for firebase not defined."});
-					node.error("Private key for firebase not defined.");
+					//node.error("Private key for firebase not defined.");
+					var logMsg={
+						"msgid":msg._msgid,
+						"message": "Private key for firebase not defined."
+					}
+					node.error(logMsg);
 					msg.payload="Private key for firebase not defined..";
 					msg.error=true;
 					node.send(msg);
@@ -136,7 +181,12 @@ module.exports = function(RED) {
 					rebootFirebaseApp = true
 				} else {
 					this.status({fill:"red",shape:"dot",text:"Database URL for firebase not defined."});
-					node.error("Database URL for firebase not defined.");
+					//node.error("Database URL for firebase not defined.");
+					var logMsg={
+						"msgid":msg._msgid,
+						"message": "Database URL for firebase not defined."
+					}
+					node.error(logMsg);
 					msg.payload="Database URL for firebase not defined..";
 					msg.error=true;
 					node.send(msg);
@@ -148,10 +198,20 @@ module.exports = function(RED) {
 					//CLose current app and start an other one with new params
 					admin.app().delete()
 					.then(function() {
-					console.log("App deleted successfully");
+					//console.log("App deleted successfully");
+					var logMsg={
+						"msgid":msg._msgid,
+						"message": "App deleted successfully"
+					}
+					node.log(logMsg);
 					})
 					.catch(function(error) {
-					console.log("Error deleting app:", error);
+					//console.log("Error deleting app:", error);
+					var logMsg={
+						"msgid":msg._msgid,
+						"message": "Error deleting app: "+error
+					}
+					node.log(logMsg);
 					});
 				}
 				app = admin.initializeApp({
@@ -164,11 +224,21 @@ module.exports = function(RED) {
                                   httpAgent: proxyAgent
 				});
 				if(app.name == '[DEFAULT]'){
-					node.log('OK');
+					//node.log('OK');
+					var logMsg={
+						"msgid":msg._msgid,
+						"message": "OK"
+					}
+					node.log(logMsg);
 					this.status({fill:"green",shape:"dot",text:"connected"});
 					appStarted = true;
 				}else{
-					node.log('KO');
+					//node.log('KO');
+					var logMsg={
+						"msgid":msg._msgid,
+						"message": "KO"
+					}
+					node.log(logMsg);
 					this.status({fill:"red",shape:"dot",text:"Not connected"});
 					appStarted = false;
 				}
@@ -183,7 +253,12 @@ module.exports = function(RED) {
 			}else{
 				//error, a typ must be defined and valid
 				this.status({fill:"red",shape:"dot",text:"Target type undefined or invalid. msg.targetType must be set to either 'USER' or 'TOPIC' value."});
-				node.error("Target type undefined or invalid. msg.targetType must be set to either 'USER' or 'TOPIC' value.");
+				//node.error("Target type undefined or invalid. msg.targetType must be set to either 'USER' or 'TOPIC' value.");
+				var logMsg={
+					"msgid":msg._msgid,
+					"message": "Target type undefined or invalid. msg.targetType must be set to either 'USER' or 'TOPIC' value."
+				}
+				node.error(logMsg);
 				msg.payload="Target type undefined or invalid. msg.targetType must be set to either 'USER' or 'TOPIC' value.";
 				msg.error=true;
 				node.send(msg);
@@ -195,7 +270,12 @@ module.exports = function(RED) {
 				
 				//error, a typ must be defined
 				this.status({fill:"red",shape:"dot",text:"Target topic or users undefined. Please check taht msg.targetType contains data."});
-				node.error("Target topic or users undefined. Please check taht msg.targetType contains data.");
+				//node.error("Target topic or users undefined. Please check taht msg.targetType contains data.");
+				var logMsg={
+					"msgid":msg._msgid,
+					"message": "Target topic or users undefined. Please check taht msg.targetType contains data."
+				}
+				node.error(logMsg);
 				msg.payload="Target topic or users undefined. Please check taht msg.targetType contains data.";
 				msg.error=true;
 				node.send(msg);
@@ -206,7 +286,12 @@ module.exports = function(RED) {
 			var endMessage;
 			
 			if(admin.app() == null){
-				node.error("No Firebase APP");
+				//node.error("No Firebase APP");
+				var logMsg={
+					"msgid":msg._msgid,
+					"message": "No Firebase APP"
+				}
+				node.error(logMsg);
 			}
 			else{
 				node.log(targetType.toUpperCase());
@@ -224,12 +309,22 @@ module.exports = function(RED) {
 					admin.messaging().send(message)
 					  .then((response) => {
 						// Response is a message ID string.
-						node.log('Successfully sent message:', response);
+						//node.log('Successfully sent message:', response);
+						var logMsg={
+							"msgid":msg._msgid,
+							"message": 'Successfully sent message:'+ response
+						}
+						node.log(logMsg);
 						msg.payload = response;
 						node.send(msg.payload);
 					  })
 					  .catch((error) => {
-						node.log('Error sending message:', error);
+						//node.log('Error sending message:', error);
+						var logMsg={
+							"msgid":msg._msgid,
+							"message": 'Error sending message:'+ error
+						}
+						node.log(logMsg);
 						msg.payload = error;
 						node.error(error);
 					  });
@@ -246,19 +341,34 @@ module.exports = function(RED) {
 							token: item
 						};
 										
-						node.log(JSON.stringify(message));
+						//node.log(JSON.stringify(message));
+						var logMsg={
+							"msgid":msg._msgid,
+							"message": JSON.stringify(message)
+						}
+						node.log(logMsg);
 						// Send a message to devices subscribed to the provided topic.
 						admin.messaging().send(message)
 						  .then((response) => {
 							// Response is a message ID string.
-							node.log('Successfully sent message:', response);
+							//node.log('Successfully sent message:', response);
+							var logMsg={
+								"msgid":msg._msgid,
+								"message": 'Successfully sent message:'+ response
+							}
+							node.log(logMsg);
 							msg.payload = response;
 							node.send(msg.payload);
 						  })
 						  .catch((error) => {
-							node.log('Error sending message:', error);
+							//node.log('Error sending message:', error);
+							  var logMsg={
+								"msgid":msg._msgid,
+								"message": 'Error sending message:'+ error
+							}
+							node.error(logMsg);
 							msg.payload = error;
-							node.error(error);
+							//node.error(error);
 						  });
 					});
 				}
@@ -269,10 +379,20 @@ module.exports = function(RED) {
 			if(appStarted) {
 				admin.app().delete()
 				  .then(function() {
-					console.log("App deleted successfully");
+					//console.log("App deleted successfully");
+					    var logMsg={
+								"msgid":msg._msgid,
+								"message": "App deleted successfully"
+							}
+							node.log(logMsg);
 				  })
 				  .catch(function(error) {
-					console.log("Error deleting app:", error);
+					//console.log("Error deleting app:", error);
+					  var logMsg={
+							"msgid":msg._msgid,
+							"message": "Error deleting app:"+ error
+						}
+						node.error(logMsg);
 				  });
 			}
 		});

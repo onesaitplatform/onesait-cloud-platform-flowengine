@@ -24,7 +24,12 @@ var process = require('process');
             var endpoint = platformConfig.scriptBasePath + "/flowengine/node/services/user/insert";
             var req = client.post(endpoint, args,function (data, response) {
                 // parsed response body as js object 
-                console.log("timestamp: ",new Date().getTime(), ", domain: ", process.env.domain, ", nodeId: ", n.id, ", msgid: ", msg._msgid, ", operation: onesaitplatform-insert, message: Status code ", response.statusCode);
+                //console.log("timestamp: ",new Date().getTime(), ", domain: ", process.env.domain, ", nodeId: ", n.id, ", msgid: ", msg._msgid, ", operation: onesaitplatform-insert, message: Status code ", response.statusCode);
+                var logMsg={
+                    "msgid":msg._msgid,
+                    "message": "Status code "+ response.statusCode
+                }
+                node.log(logMsg);
                 if(response.statusCode== 200){
                     msg.ok=true;
                 }else{
@@ -38,13 +43,23 @@ var process = require('process');
             });
             req.on('requestTimeout', function (req) {
                 msg.ok=false;
-                console.log("timestamp: ",new Date().getTime(), "domain: ", process.env.domain, ", nodeId: ", n.id, ", msgid: ", msg._msgid, ", operation: onesaitplatform-insert, message: Error, request has expired");
+                //console.log("timestamp: ",new Date().getTime(), "domain: ", process.env.domain, ", nodeId: ", n.id, ", msgid: ", msg._msgid, ", operation: onesaitplatform-insert, message: Error, request has expired");
+                var logMsg={
+                    "msgid":msg._msgid,
+                    "message": "Error, request has expired"
+                }
+                node.error(logMsg);
                 req.abort();
             });
              
             req.on('responseTimeout', function (res) {
                 msg.ok=false;
-                console.log("timestamp: ",new Date().getTime(), "domain: ", process.env.domain, ", nodeId: ", n.id,  ", msgid: ", msg._msgid, ", operation: onesaitplatform-insert, message: Error, response has expired");
+                //console.log("timestamp: ",new Date().getTime(), "domain: ", process.env.domain, ", nodeId: ", n.id,  ", msgid: ", msg._msgid, ", operation: onesaitplatform-insert, message: Error, response has expired");
+                var logMsg={
+                    "msgid":msg._msgid,
+                    "message": "Error, request has expired"
+                }
+                node.error(logMsg);
             });
         });
         
