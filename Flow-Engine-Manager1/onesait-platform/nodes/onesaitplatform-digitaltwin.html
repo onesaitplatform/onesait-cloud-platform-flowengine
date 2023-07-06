@@ -1,0 +1,280 @@
+
+<html>
+
+ <div style="display: none;" id="dialog-error" title="Se ha producido un error">Se ha perdido la comunicación con la plataforma</div>    
+<script type="text/x-red" data-template-name="onesaitplatform-digitaltwin">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="common.label.name"></span></label>
+        <input type="text" id="node-input-name" data-i18n="[placeholder]common.label.name">
+    </div>
+
+    <div class="form-row">
+      <label for="node-input-digitalTwinTypeList"><i class="icon-th-list"></i>Digital Twin Types available </label>
+      <select id="node-input-digitalTwinTypeList" placeholder="Digital Twin Type">
+        
+      </select>
+    </div>
+    <div class="form-row">
+      <label for="node-input-digitalTwinDeviceList"><i class="icon-th-list"></i>Digital Twin Devices available </label>
+      <select id="node-input-digitalTwinDeviceList" placeholder="Digital Twin Devices">
+        
+      </select>
+    </div>
+    <div class="form-row">
+      <label for="node-input-digitalTwinType"><i class="icon-tag"></i> Digital Twin Type</label>
+      <input  disabled="disabled" type="text" id="node-input-digitalTwinType" placeholder="Digital Twin Type">
+    </div>
+    <div class="form-row">
+      <label for="node-input-digitalTwinDevice"><i class="icon-tag"></i> Digital Twin Device</label>
+      <input  disabled="disabled" type="text" id="node-input-digitalTwinDevice" placeholder="Digital Twin Device">
+    </div>
+    <div class="form-row">
+      <label for="node-input-digitalKey"><i class="icon-tag"></i> Digital Twin Key</label>
+      <input  disabled="disabled" type="text" id="node-input-digitalKey" placeholder="Digital Twin Key">
+    </div>
+
+    <input type="hidden" name="selectedDigitalTwinType" id="selectedDigitalTwinType" value="">
+    <input type="hidden" name="selectedDigitalTwinDevice" id="selectedDigitalTwinDevice" value="">
+    <input type="hidden" name="node-input-digitalTwinJSON" id="node-input-digitalTwinJSON" value="">
+    <!--<input type="hidden" name="node-input-digitalKey" id="node-input-digitalKey" value="">-->
+
+    <script type="text/javascript">
+        var insertedLista = false;
+        onElementInserted('body', '#node-input-digitalTwinTypeList', function(element) {
+                         
+
+        while(insertedLista == false){ 
+            $('#node-input-digitalTwinTypeList').append('<option value='+""+'>'+""+'</option>');
+                $.each(digitalTwinTypesInfoList, function (i, item) {
+                    $('#node-input-digitalTwinTypeList').append('<option value='+item.name+'>'+item.name+'</option>');
+                });   
+              insertedLista = true; 
+            }
+            if( $('#node-input-digitalTwinType').val()!=null &&  $('#node-input-digitalTwinType').val()!=""){
+                $('#node-input-digitalTwinTypeList').val( $('#node-input-digitalTwinType').val());
+            }
+            loadDevicesFromList(digitalTwinTypesInfoMap.get($('#node-input-digitalTwinType').val()));
+            if( $('#node-input-digitalTwinDevice').val()!=null &&  $('#node-input-digitalTwinDevice').val()!=""){
+                $('#node-input-digitalTwinDeviceList').val( $('#node-input-digitalTwinDevice').val());
+            }
+            $('#node-input-digitalTwinTypeList').change(function(){
+                $('input[name=selectedDigitalTwinType]').val( $('#node-input-digitalTwinTypeList').val());
+                if($('#node-input-digitalTwinType').val() !=  $('#node-input-digitalTwinTypeList').val()){
+                    $('#node-input-digitalTwinType').val($('#node-input-digitalTwinTypeList').val());
+                    $("#node-input-digitalTwinJSON").val(digitalTwinTypesInfoMap.get($('#node-input-digitalTwinType').val()).json);
+                    $('#node-input-digitalTwinDevice').val("");
+                    $('#node-input-digitalKey').val("");
+                    loadDevicesFromList(digitalTwinTypesInfoMap.get($('#node-input-digitalTwinType').val()));
+                }    
+            }); 
+        }); 
+     </script>
+
+</script>
+
+<script type="text/x-red" data-help-name="onesaitplatform-digitaltwin"">
+    <p>Node that represents a Digital Twin of the platform.</p>
+    <p>Actions can be sent by receiving messages from the input of the node.</p>
+    <p>Events can be retrieved on the outputs of the node.</p>
+    <p><code>Name</code> It is used to identity the node by a specific name. 
+    This is an optional field.</p>
+
+    <p><code>Digital Twin Types available</code>  Selection of Digital Twin types availables in the platform. The selection will be saved in the field <code>Digital Twin Type</code></p>
+
+</script>
+
+<script type="text/javascript" src="config/onesait-platform-config.js"></script>
+<script type="text/javascript" >
+    var auth = getParameterByName('authentication');
+    RED.nodes.registerType('onesaitplatform-digitaltwin',{
+        color: '#C0DEED',
+        category: 'function',
+        defaults: {
+            name: {value:""},
+            digitalTwinJSON: {value:"{}"},
+            outputs: {value:1},
+            customOutputLabels: {value:[""]},
+            digitalTwinType: {value:"",required:true},
+            digitalTwinDevice: {value:"",required:true},
+            digitalKey: {value:"",required:true},
+            authentication: {value: auth}
+        },
+        inputs:1,
+        outputs:1,
+        inputLabels:"Actions input",
+        icon: "platform_logo.png",
+		label: function() {
+            var defaultLabel= "onesaitplatform-digitaltwin";
+            if(this.digitalTwinType != null && this.digitalTwinDevice != null){
+                defaultLabel = this.digitalTwinType +" - DigitalTwin - "+this.digitalTwinDevice;
+            }
+			return this.name||defaultLabel;
+		},
+        outputLabels: function(index) {
+            if(index == 0 ) return "digitalTwinStatus";
+            return this.customOutputLabels[index-1];
+        },
+        oneditsave: function() {
+                       
+            var json = $("#node-input-digitalTwinJSON").val();
+			
+			var eventsNum = 1;
+            if(json != null && json != ""){
+            	var events = Object.keys(JSON.parse(json).events);
+				eventsNum = events.length + 1;
+
+				if (eventsNum < 0) eventsNum = 0;
+				var eventDesc = [];
+				Object.keys(events).forEach(function(key) {
+				  eventDesc.push(events[key]);
+				});
+			}
+			this.outputs = eventsNum;
+			this.customOutputLabels = eventDesc;
+        }
+    });
+    
+    var digitalTwinTypesInfoList;
+    var digitalTwinTypesInfoMap = new Map();
+    var insertedInInfoList = false;
+    
+    function getParameterByName(name, url) {
+        if (!url) {
+          url = window.location.href;
+        }
+        name = name.replace(/[\[\]]/g, "\\$&");
+        var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+            results = regex.exec(url);
+        if (!results) return null;
+        if (!results[2]) return '';
+        return decodeURIComponent(results[2].replace(/\+/g, " "));
+    }
+
+    function loadDevicesFromList(data){
+        var deviceList = {};
+
+        if(data != null && data != "" && typeof data !== 'undefined'){
+            deviceList = data.devices;
+        }
+        var finishInsert = false;
+        while(finishInsert == false){ 
+            $('#node-input-digitalTwinDeviceList').find('option').remove().end().append('<option value='+""+'>'+""+'</option>');
+            $.each(deviceList, function (i, item) {
+                $('#node-input-digitalTwinDeviceList').append('<option value='+item.device+'>'+item.device+'</option>');
+            });
+            finishInsert = true; 
+        }
+        $('#node-input-digitalTwinDeviceList').change(function(){
+            $('input[name=selectedDigitalTwinDevice]').val( $('#node-input-digitalTwinDeviceList').val());
+            if($('#node-input-digitalTwinDevice').val() !=  $('#node-input-digitalTwinDeviceList').val()){
+                $('#node-input-digitalTwinDevice').val($('#node-input-digitalTwinDeviceList').val());
+                //Find digitalkey from DigitalTwinType and Device Name
+                var deviceInfo = digitalTwinTypesInfoMap.get($('#node-input-digitalTwinType').val()).devices.find(
+                    function(element){
+                        return element.device == $('#node-input-digitalTwinDevice').val();
+                    }
+                );
+                if(deviceInfo != null && typeof deviceInfo !== 'undefined'){
+                    //change deviceKey
+                    $('#node-input-digitalKey').val(deviceInfo.digitalKey);
+                }
+            }
+        }); 
+    }
+
+    function getdigitalTwinTypeInfoList(){
+
+        var jsonCallbackName = 'digitalTwinTypeList';
+        var urlService = onesaitPlatformConfig.scriptBasePath + '/node/services/user/digital_twin_ypes?authentication=';
+        var url = urlService + auth + '&callback=' +jsonCallbackName;
+     
+
+        $.ajax({
+            url: url, 
+            dataType: "jsonp",
+            timeout: 10000,
+            jsonpCallback: jsonCallbackName,
+            success: function(data, textStatus, jqXHR) {
+
+                if(textStatus == "success"){
+                    digitalTwinTypesInfoList = data;
+                    onElementInserted('body', '#node-input-digitalTwinTypeList', function(element) {     
+                        while(insertedInInfoList == false){ 
+                            $('#node-input-digitalTwinTypeList').append('<option value='+""+'>'+""+'</option>');
+                            $.each(digitalTwinTypesInfoList, function (i, item) {
+                                $('#node-input-digitalTwinTypeList').append('<option value='+item.name+'>'+item.name+'</option>');
+                                digitalTwinTypesInfoMap.set(item.name,item);
+                            });
+                            insertedInInfoList = true; 
+                        }
+                        if( $('#node-input-digitalTwinType').val()!=null &&  $('#node-input-digitalTwinType').val()!=""){
+                            $('#node-input-digitalTwinTypeList').val( $('#node-input-digitalTwinType').val());
+                        }
+                        loadDevicesFromList(digitalTwinTypesInfoMap.get($('#node-input-digitalTwinType').val()));
+                        if( $('#node-input-digitalTwinDevice').val()!=null &&  $('#node-input-digitalTwinDevice').val()!=""){
+                            $('#node-input-digitalTwinDeviceList').val( $('#node-input-digitalTwinDevice').val());
+                        }
+                        $('#node-input-digitalTwinTypeList').change(function(){
+                            $('input[name=selectedDigitalTwinType]').val( $('#node-input-digitalTwinTypeList').val());
+                            if($('#node-input-digitalTwinType').val() !=  $('#node-input-digitalTwinTypeList').val()){
+                                $('#node-input-digitalTwinType').val($('#node-input-digitalTwinTypeList').val());
+                                $("#node-input-digitalTwinJSON").val(digitalTwinTypesInfoMap.get($('#node-input-digitalTwinType').val()).json);
+                                $('#node-input-digitalTwinDevice').val("");
+                                $('#node-input-digitalKey').val("");
+                                loadDevicesFromList(digitalTwinTypesInfoMap.get($('#node-input-digitalTwinType').val()));
+                            }
+                        }); 
+                    }); 
+                }
+            }, 
+            error: function(xhr, status, error) {
+            
+                if(digitalTwinTypesInfoList!=null){
+
+                onElementInserted('body', '#node-input-digitalTwinTypeList', function(element) {
+                    while(insertedInInfoList == false){ 
+                        $('#node-input-digitalTwinTypeList').append('<option value='+""+'>'+""+'</option>');
+                        $.each(digitalTwinTypesInfoList, function (i, item) {
+                            $('#node-input-digitalTwinTypeList').append('<option value='+item.name+'>'+item.name+'</option>');
+                            digitalTwinTypesInfoMap.set(item.name,item);
+                        });                      
+                        insertedInInfoList = true; 
+                    }
+
+                    if( $('#node-input-digitalTwinType').val()!=null &&  $('#node-input-digitalTwinType').val()!=""){
+                        $('#node-input-digitalTwinTypeList').val( $('#node-input-digitalTwinType').val());
+                    }
+                    loadDevicesFromList(digitalTwinTypesInfoMap.get($('#node-input-digitalTwinType').val()));
+                    $('#node-input-digitalTwinTypeList').change(function(){
+                        $('input[name=selectedDigitalTwinType]').val( $('#node-input-digitalTwinTypeList').val());
+                        if($('#node-input-digitalTwinType').val() !=  $('#node-input-digitalTwinTypeList').val()){
+                            $('#node-input-digitalTwinType').val($('#node-input-digitalTwinTypeList').val());
+                            $("#node-input-digitalTwinJSON").val(digitalTwinTypesInfoMap.get($('#node-input-digitalTwinType').val()).json);
+                            $('#node-input-digitalTwinDevice').val("");
+                            $('#node-input-digitalKey').val("");
+                            loadDevicesFromList(digitalTwinTypesInfoMap.get($('#node-input-digitalTwinType').val()));
+                        }
+                    }); 
+                }); 
+            }else{
+              showErrorDialogStatic();
+            }} 
+        }); //ajax call
+    }     
+    function showErrorDialogGetDigitalTwinTypes() {
+        $( "#dialog-error" ).dialog({
+            resizable: false,
+            modal: true,
+            position: [($(window).width() / 2) - 150, 160],
+            dialogClass: 'DeleteConfirmDialog',
+            buttons: {
+                'OK': function () {
+                    (this).dialog("close");
+                    return true;
+                }
+            }
+        });
+    }
+    getdigitalTwinTypeInfoList();
+
+</script>

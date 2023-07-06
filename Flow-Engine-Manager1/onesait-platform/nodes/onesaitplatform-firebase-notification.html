@@ -1,0 +1,147 @@
+<html>
+	<script type="text/javascript">
+	var auth = getParameterByName('authentication');
+		RED.nodes.registerType('onesaitplatform-firebase-notification',{
+			category: 'function',
+			color: '#C0DEED',
+			defaults: {
+				name: {value:""},
+				projectId: {value:""},
+				clientEmail: {value:""},
+				privateKey:{value:""},
+				databaseURL:{value:""},
+				/*target:{value:""},
+				targetOrigin:{value:""},
+				targetType:{value:""},*/
+				proxy: {type:"http proxy",required: false},
+				authentication: {value: auth}
+			},
+			inputs: 1,
+			outputs:1,
+			icon: "platform_logo.png",
+			label: function() {
+				return this.name||"onesaitplatform-firebase-notification";
+			},
+			oneditprepare: function() {
+				/*$("#node-input-typed-target").typedInput({default:'msg',types:['msg','str']}).typedInput('value','');
+				//.typedInput({types:['msg', {value:"full",label:RED._("node-red:debug.msgobj"),hasValue:false}]});
+				$("#node-input-typed-target").typedInput('value',this.target);
+				$("#node-input-typed-target").typedInput('type',this.targetOrigin);*/
+				function updateProxyOptions() {
+                    if ($("#node-input-useProxy").is(":checked")) {
+                        $("#node-input-useProxy-row").show();
+                    } else {
+                        $("#node-input-useProxy-row").hide();
+                    }
+                }
+                if (this.proxy) {
+                    $("#node-input-useProxy").prop("checked", true);
+                } else {
+                    $("#node-input-useProxy").prop("checked", false);
+                }
+                updateProxyOptions();
+                $("#node-input-useProxy").on("click", function() {
+                    updateProxyOptions();
+                });
+
+			},oneditsave: function() {
+	           /* var type = $("#node-input-typed-target").typedInput('type');
+	            var value = $("#node-input-typed-target").typedInput('value');
+	            $("#node-input-targetOrigin").val(type);
+	            $("#node-input-target").val(value);*/
+	            if (!$("#node-input-useProxy").is(":checked")) {
+                    $("#node-input-proxy").val("_ADD_");
+                }
+	        }
+		});
+	 function getParameterByName(name, url) {
+     	
+		    if (!url) {
+		      url = window.location.href;
+		    }
+		    name = name.replace(/[\[\]]/g, "\\$&");
+		    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+		        results = regex.exec(url);
+		    if (!results) return null;
+		    if (!results[2]) return '';
+		    return decodeURIComponent(results[2].replace(/\+/g, " "));
+		}
+	</script>
+
+	<script type="text/x-red" data-template-name="onesaitplatform-firebase-notification">
+		<div class="form-row">
+			<label for="node-input-name"><i class="icon-file"></i> Name</label>
+			<input type="text" id="node-input-name" placeholder="Name">
+		</div>
+		<div class="form-row">
+			<label for="node-input-projectId"><i class="icon-file"></i> Project Id</label>
+			<input type="text" id="node-input-projectId" placeholder="Project Id">
+		</div>
+		<div class="form-row">
+			<label for="node-input-clientEmail"><i class="icon-file"></i> Client Email</label>
+			<input type="text" id="node-input-clientEmail" placeholder="Client Email">
+		</div>
+		<div class="form-row">
+			<label for="node-input-privateKey"><i class="icon-file"></i> Private Key</label>
+			<input type="password" id="node-input-privateKey" placeholder="Private Key">
+		</div>
+		<div class="form-row">
+			<label for="node-input-databaseURL"><i class="icon-file"></i> Database URL</label>
+			<input type="text" id="node-input-databaseURL" placeholder="Database URL">
+		</div>
+		 <div class="form-row">
+            <input type="checkbox" id="node-input-useProxy" style="display: inline-block; width: auto; vertical-align: top;">
+            <label for="node-input-useProxy" style="width: auto;"><span data-i18n="httpin.use-proxy"></span></label>
+            <div id="node-input-useProxy-row" class="hide">
+                <label style="width: auto; margin-left: 20px; margin-right: 10px;" for="node-input-proxy"><i class="fa fa-globe"></i> <span data-i18n="httpin.proxy-config"></span></label><input type="text" style="width: 270px" id="node-input-proxy">
+            </div>
+        </div>
+		<!--
+		<div class="form-row">
+	        <label for="node-input-targetType"><i class="fa fa-tasks"></i> Target type</label>
+	        <select type="text" id="node-input-targetType" style="width:70%;">
+	        <option value="TOPIC">Topic</option>
+	        <option value="USER">User</option>
+	        </select>
+	    </div>
+	    
+		<div class="form-row">
+	        <label for="node-input-typed-target"><i class="fa fa-list"></i> <span >Target</span></label>
+	        <input id="node-input-typed-target" type="text" style="width: 70%">
+	        <input id="node-input-targetOrigin" type="hidden">
+	        <input id="node-input-target" type="hidden">
+	    </div>
+	    -->
+		
+	</script>
+
+	<script type="text/x-red" data-help-name="onesaitplatform-firebase-notification">
+		<p>This node allows sending native notifications to mobile devices. The node is designed to be attached to the output of the onesait notification endpoint node subscribed with to the notificationMessage ontology, with no other element in between</p>
+		<p>Form attributes:</p>
+		<p><code>Name</code> It is used to identity the node by a specific name. 
+		This is an optional field.</p>
+
+		<p>Firebase configuration attributes:</p>
+		<p><code>Project Id</code> Firebase project id. 
+		If left blank (not defined) in the node, it will be searched in the <code>msg.projectId</code>. If filled, the content will have priority over the msg.projectId value.</p>
+		<p><code>Client Email</code> Firebase client email. 
+		If left blank (not defined) in the node, it will be searched in the <code>msg.clientEmail</code>. If filled, the content will have priority over the msg.clientEmail value.</p>
+		<p><code>Private key</code> Firebase private key. 
+		If left blank (not defined) in the node, it will be searched in the <code>msg.privateKey</code>. If filled, the content will have priority over the msg.privateKey value.</p>
+		<p><code>Database URL</code> Firebase database url. 
+		If left blank (not defined) in the node, it will be searched in the <code>msg.databaseURL</code>. If filled, the content will have priority over the msg.databaseURL value.</p>
+
+
+		<p>Notification target selection:</p>
+
+		<p>Two values will be required in the incoming <code>msg</code>:</p>
+
+		<p><code>msg.targetType</code> Type of notification target. This can be either "TOPIC" or "USER". </p>
+		<p><code>msg.targetName</code> Target of the notification. This value depends ont the type: </p>
+		<p>If <code>TOPIC</code> is selected, <code>msg.targetName</code> must contain the topic name</p>
+		<p>If <code>USER</code> is selected, <code>msg.targetName</code> must contain an array of Firebase deviceToken.</p>
+
+		<p>The output message has the following attributes:</p>
+		<p><code>payload</code>Output from the notification platfrom</p>
+	</script>
+</html>

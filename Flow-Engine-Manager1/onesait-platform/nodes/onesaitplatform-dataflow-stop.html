@@ -1,0 +1,252 @@
+<html>
+
+ <div style="display: none;" id="dialog-error" title="Se ha producido un error">Se ha perdido la comunicación con la plataforma</div>    
+  <script type="text/javascript" language="javascript" src="config/onesait-platform-config.js"></script>
+  <script type="text/javascript">
+     var auth = getParameterByName('authentication');
+
+    RED.nodes.registerType('Stop Dataflow',{
+      category: 'Onesait Platform Dataflows',
+      color: '#C0DEED',
+      defaults: {
+        name: {value:""},
+        dataflowIdentification: {value:""},
+        authentication: {value: auth}
+      },
+      inputs: 1,
+      outputs:1,
+      icon: "platform_logo.png",
+      label: function() {
+        return this.name||"Stop Dataflow";
+      }
+    });
+
+  function showErrorDialogInsert() {
+            $( "#dialog-error" ).dialog({
+              resizable: false,
+              modal: true,
+              position: [($(window).width() / 2) - 150, 160],
+              dialogClass: 'DeleteConfirmDialog',
+               buttons: {
+                'OK': function () {
+                    $(this).dialog("close");
+                    return true;
+                }
+            }
+            });
+          }
+
+
+     var listaDataflowsUsuario;
+     var insertedLista = false;
+
+
+     function onElementInserted(containerSelector, elementSelector, callback) {
+
+        var onMutationsObserved = function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.addedNodes.length) {
+                    var elements = $(mutation.addedNodes).find(elementSelector);
+                    for (var i = 0, len = elements.length; i < len; i++) {
+                        callback(elements[i]);
+                    }
+                }
+            });
+        };
+
+        var target = $(containerSelector)[0];
+        var config = { childList: true, subtree: true };
+        var MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
+        var observer = new MutationObserver(onMutationsObserved);    
+        observer.observe(target, config);
+
+  }
+
+     function getParameterByName(name, url) {
+      
+        if (!url) {
+          url = window.location.href;
+        }
+        name = name.replace(/[\[\]]/g, "\\$&");
+        var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+            results = regex.exec(url);
+        if (!results) return null;
+        if (!results[2]) return '';
+        return decodeURIComponent(results[2].replace(/\+/g, " "));
+    }
+
+     function obtenerDataflowsUsuario(){
+
+     var jsonCallbackName = 'dataflowsStop';
+     var urlService = onesaitPlatformConfig.scriptBasePath + '/node/services/user/dataflows?authentication=';
+     var url = urlService + auth + '&callback=' +jsonCallbackName;
+     
+
+     $.ajax({
+        url: url, 
+        dataType: "jsonp",
+        timeout: 10000,
+        jsonpCallback: jsonCallbackName,
+        success: function(data, textStatus, jqXHR) {
+
+            if(textStatus == "success"){
+
+               listaDataflowsUsuario = data;
+               onElementInserted('body', '#node-input-dataflowStatus', function(element) {
+                         
+
+                 while(insertedLista == false){ 
+                  $('#node-input-dataflowStatus').append('<option value='+""+'>'+""+'</option>');
+                    $.each(listaDataflowsUsuario, function (i, item) {
+                    $('#node-input-dataflowStatus').append('<option value="'+item+'">'+item+'</option>');
+                });
+
+                      
+              insertedLista = true; 
+          }
+          
+
+                  if( $('#node-input-dataflowIdentification').val()!=null &&  $('#node-input-dataflowIdentification').val()!=""){
+                     $('#node-input-dataflowStatus').val( $('#node-input-dataflowIdentification').val());
+                  }
+
+           $('#node-input-dataflowStatus').change(function(){
+                        $('input[name=selectDataflowStatus]').val( $('#node-input-dataflowStatus').val());
+                        
+                        if($('#node-input-dataflowIdentification').val() !=  $('#node-input-dataflowStatus').val()){
+                            $('#node-input-dataflowIdentification').val($('#node-input-dataflowStatus').val());   
+                        }
+                        
+
+
+                      }); 
+       
+      }); 
+               
+          
+        }
+      }
+       , error: function(xhr, status, error) {
+          
+              
+            if(listaDataflowsUsuario!=null){
+
+             onElementInserted('body', '#node-input-dataflowStatus', function(element) {
+                         
+
+                 while(insertedLista == false){ 
+                  $('#node-input-dataflowStatus').append('<option value='+""+'>'+""+'</option>');
+                    $.each(listaDataflowsUsuario, function (i, item) {
+                    $('#node-input-dataflowStatus').append('<option value="'+item+'">'+item+'</option>');
+                });
+
+                      
+              insertedLista = true; 
+          }
+          
+
+                  if( $('#node-input-dataflowIdentification').val()!=null &&  $('#node-input-dataflowIdentification').val()!=""){
+                     $('#node-input-dataflowStatus').val( $('#node-input-dataflowIdentification').val());
+                  }
+
+           $('#node-input-dataflowStatus').change(function(){
+                        $('input[name=selectDataflowStatus]').val( $('#node-input-dataflowStatus').val());
+                        
+                        if($('#node-input-dataflowIdentification').val() !=  $('#node-input-dataflowStatus').val()){
+                            $('#node-input-dataflowIdentification').val($('#node-input-dataflowStatus').val());   
+                        }
+                        
+
+
+                      }); 
+       
+      }); 
+
+            }else{
+              showErrorDialogStatic();
+            }
+           } 
+
+    })
+
+
+    }     
+
+    obtenerDataflowsUsuario();
+         
+  </script>
+
+  <script type="text/x-red" data-template-name="Stop Dataflow">
+    
+    
+    <div id="div_id">
+      
+    </div>
+    <div class="form-row">
+      <label for="node-input-name"><i class="icon-file"></i> Name</label>
+      <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+      <label for="node-input-dataflowStatus"><i class="icon-th-list"></i>Dataflows available </label>
+      <select id="node-input-dataflowStatus" placeholder="Dataflow">
+        
+      </select>
+    </div>
+     <div class="form-row">
+      <label for="node-input-dataflowIdentification"><i class="icon-tag"></i> Dataflow</label>
+      <input  disabled="disabled" type="text" id="node-input-dataflowIdentification" placeholder="Dataflow">
+    </div>
+   
+    <input type="hidden" name="selectDataflowStatus" value="">
+    <script type="text/javascript">
+        
+         var insertedLista = false;
+
+    onElementInserted('body', '#node-input-dataflowStatus', function(element) {
+                         
+
+                 while(insertedLista == false){ 
+                  $('#node-input-dataflowStatus').append('<option value='+""+'>'+""+'</option>');
+                    $.each(listaDataflowsUsuario, function (i, item) {
+                    $('#node-input-dataflowStatus').append('<option value="'+item+'">'+item+'</option>');
+                });
+
+                      
+              insertedLista = true; 
+          }
+          
+
+                  if( $('#node-input-dataflowIdentification').val()!=null &&  $('#node-input-dataflowIdentification').val()!=""){
+                     $('#node-input-dataflowStatus').val( $('#node-input-dataflowIdentification').val());
+                  }
+
+           $('#node-input-dataflowStatus').change(function(){
+                        $('input[name=selectDataflowStatus]').val( $('#node-input-dataflowStatus').val());
+                        
+                        if($('#node-input-dataflowIdentification').val() !=  $('#node-input-dataflowStatus').val()){
+                            $('#node-input-dataflowIdentification').val($('#node-input-dataflowStatus').val());   
+                        }
+                        
+
+
+                      }); 
+       
+      }); 
+        
+          
+
+     </script>
+    
+  </script>
+
+  <script type="text/x-red" data-help-name="Stop Dataflow">
+    <p>Node for stopping the execution of a specific Dataflow.</p>
+    <p><code>Name</code> It is used to identity the node by a specific name. 
+    This is an optional field.</p>
+    <p><code>Dataflow</code> Name of the dataflow to check. If the incoming message has the property <code>msg.dataflowIdentification</code> defined, its value will be used instead.</p>
+    
+    <p>The output message has the following attributes:</p>
+    <p><code>payload</code>The result of the dataflow stop command. </p>
+    <p><code>ok</code>A boolean that specifies whether the stop command was successfully executed.</p>
+  </script>
+</html>

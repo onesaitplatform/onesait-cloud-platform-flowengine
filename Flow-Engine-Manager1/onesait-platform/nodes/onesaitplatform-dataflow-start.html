@@ -1,0 +1,336 @@
+<html>
+
+ <div style="display: none;" id="dialog-error" title="Se ha producido un error">Se ha perdido la comunicación con la plataforma</div>    
+  <script type="text/javascript" language="javascript" src="config/onesait-platform-config.js"></script>
+  <script type="text/javascript">
+     var auth = getParameterByName('authentication');
+
+    RED.nodes.registerType('Start Dataflow',{
+      category: 'Onesait Platform Dataflows',
+      color: '#C0DEED',
+      defaults: {
+        name: {value:""},
+        dataflowIdentification: {value:""},
+        authentication: {value: auth},
+        paramteters: {vale:""},
+        resetOrigin: {value:false},
+        parameterInputs: {value:[],validate:function(v){
+                var validationRes = true;
+                v.forEach(function(element){
+                    if(element.value == "") validationRes = false;
+                });
+                return validationRes;
+            }},
+      },
+      inputs: 1,
+      outputs:1,
+      icon: "platform_logo.png",
+      label: function() {
+        return this.name||"Start Dataflow";
+      },
+       oneditprepare: function() {
+        //node-input-parameters-container
+        $("#node-input-parameters-container").css('min-height','250px').css('min-width','450px').editableList({
+                addItem: function(container,i,opt) {
+
+                     if (!opt.hasOwnProperty('r')) {
+                        opt.r = {};
+                    }
+                    var opInput = opt.r;
+                    if (!opInput.hasOwnProperty('param')) {
+                        opInput.param = "Param_"+i;
+                    }
+                    if (!opInput.hasOwnProperty('value')) {
+                        opInput.value='';
+                    }
+                    if (!opInput.hasOwnProperty('type')) {
+                        opInput.type='msg';
+                    }
+
+                    container.css({
+                        overflow: 'hidden',
+                        whiteSpace: 'nowrap'
+                    });
+                    var row = $('<div/>').appendTo(container);
+                    var row2 = $('<div/>',{style:"padding-top: 5px; padding-left: 175px;"}).appendTo(container);
+                    var row3 = $('<div/>',{style:"padding-top: 5px; padding-left: 102px;"}).appendTo(container);
+
+                    var label = $('<input/>',{class:"node-input-rule-case",style:"width:120px;margin-left: 3px;"}).val(opInput.param).appendTo(row);
+                    var valueField = $('<input/>',{class:"node-input-rule-value",type:"text",style:"width:250px;margin-left: 5px;"}).appendTo(row).typedInput({default:opInput.type,types:['msg','str']}).typedInput('value',opInput.value);
+
+                },
+                removeItem: function(opt) {},
+                sortItems: function(rules){},
+                sortable: true,
+                removable: true,
+                addButton: true
+            });
+
+            for (var i=0;i<this.parameterInputs.length;i++) {
+                var opInput = this.parameterInputs[i];
+                $("#node-input-parameters-container").editableList('addItem',{r:opInput,i:i});
+            }
+            prevLoadedParams = this.parameterInputs;
+       },
+       oneditsave: function() {
+           var parameterInputs = $("#node-input-parameters-container").editableList('items');
+    
+            var node = this;
+            node.parameterInputs = [];
+            parameterInputs.each(function(i) {
+                var opInput = {};
+                var ruleData = $(this).data('data');
+                var rule = $(this);
+                var label = rule.find(".node-input-rule-case").val();
+                var v = rule.find(".node-input-rule-value").typedInput('value');
+                var vt = rule.find(".node-input-rule-value").typedInput('type');
+                opInput.param = label;
+                opInput.value = v ; //msg[v]
+                opInput.type = vt;
+                node.parameterInputs.push(opInput);
+            });
+
+            
+       }
+    });
+
+  function showErrorDialogInsert() {
+            $( "#dialog-error" ).dialog({
+              resizable: false,
+              modal: true,
+              position: [($(window).width() / 2) - 150, 160],
+              dialogClass: 'DeleteConfirmDialog',
+               buttons: {
+                'OK': function () {
+                    $(this).dialog("close");
+                    return true;
+                }
+            }
+            });
+          }
+
+
+     var listaDataflowsUsuario;
+     var insertedLista = false;
+
+
+     function onElementInserted(containerSelector, elementSelector, callback) {
+
+        var onMutationsObserved = function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.addedNodes.length) {
+                    var elements = $(mutation.addedNodes).find(elementSelector);
+                    for (var i = 0, len = elements.length; i < len; i++) {
+                        callback(elements[i]);
+                    }
+                }
+            });
+        };
+
+        var target = $(containerSelector)[0];
+        var config = { childList: true, subtree: true };
+        var MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
+        var observer = new MutationObserver(onMutationsObserved);    
+        observer.observe(target, config);
+
+  }
+
+     function getParameterByName(name, url) {
+      
+        if (!url) {
+          url = window.location.href;
+        }
+        name = name.replace(/[\[\]]/g, "\\$&");
+        var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+            results = regex.exec(url);
+        if (!results) return null;
+        if (!results[2]) return '';
+        return decodeURIComponent(results[2].replace(/\+/g, " "));
+    }
+
+     function obtenerDataflowsUsuario(){
+
+     var jsonCallbackName = 'dataflowsStart';
+     var urlService = onesaitPlatformConfig.scriptBasePath + '/node/services/user/dataflows?authentication=';
+     var url = urlService + auth + '&callback=' +jsonCallbackName;
+     
+
+     $.ajax({
+        url: url, 
+        dataType: "jsonp",
+        timeout: 10000,
+        jsonpCallback: jsonCallbackName,
+        success: function(data, textStatus, jqXHR) {
+
+            if(textStatus == "success"){
+
+               listaDataflowsUsuario = data;
+               onElementInserted('body', '#node-input-dataflowStatus', function(element) {
+                         
+
+                 while(insertedLista == false){ 
+                  $('#node-input-dataflowStatus').append('<option value='+""+'>'+""+'</option>');
+                    $.each(listaDataflowsUsuario, function (i, item) {
+                    $('#node-input-dataflowStatus').append('<option value="'+item+'">'+item+'</option>');
+                });
+
+                      
+              insertedLista = true; 
+          }
+          
+
+                  if( $('#node-input-dataflowIdentification').val()!=null &&  $('#node-input-dataflowIdentification').val()!=""){
+                     $('#node-input-dataflowStatus').val( $('#node-input-dataflowIdentification').val());
+                  }
+
+           $('#node-input-dataflowStatus').change(function(){
+                        $('input[name=selectDataflowStatus]').val( $('#node-input-dataflowStatus').val());
+                        
+                        if($('#node-input-dataflowIdentification').val() !=  $('#node-input-dataflowStatus').val()){
+                            $('#node-input-dataflowIdentification').val($('#node-input-dataflowStatus').val());   
+                        }
+                        
+
+
+                      }); 
+       
+      }); 
+               
+          
+        }
+      }
+       , error: function(xhr, status, error) {
+          
+              
+            if(listaDataflowsUsuario!=null){
+
+             onElementInserted('body', '#node-input-dataflowStatus', function(element) {
+                         
+
+                 while(insertedLista == false){ 
+                  $('#node-input-dataflowStatus').append('<option value='+""+'>'+""+'</option>');
+                    $.each(listaDataflowsUsuario, function (i, item) {
+                    $('#node-input-dataflowStatus').append('<option value="'+item+'">'+item+'</option>');
+                });
+
+                      
+              insertedLista = true; 
+          }
+          
+
+                  if( $('#node-input-dataflowIdentification').val()!=null &&  $('#node-input-dataflowIdentification').val()!=""){
+                     $('#node-input-dataflowStatus').val( $('#node-input-dataflowIdentification').val());
+                  }
+
+           $('#node-input-dataflowStatus').change(function(){
+                        $('input[name=selectDataflowStatus]').val( $('#node-input-dataflowStatus').val());
+                        
+                        if($('#node-input-dataflowIdentification').val() !=  $('#node-input-dataflowStatus').val()){
+                            $('#node-input-dataflowIdentification').val($('#node-input-dataflowStatus').val());   
+                        }
+                        
+
+
+                      }); 
+       
+      }); 
+
+            }else{
+              showErrorDialogStatic();
+            }
+           } 
+
+    })
+
+
+    }     
+
+    obtenerDataflowsUsuario();
+         
+  </script>
+
+  <script type="text/x-red" data-template-name="Start Dataflow">
+    
+    
+    <div id="div_id">
+      
+    </div>
+    <div class="form-row">
+      <label for="node-input-name"><i class="icon-file"></i> Name</label>
+      <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+    <div class="form-row">
+      <label for="node-input-dataflowStatus"><i class="icon-th-list"></i> Dataflows available </label>
+      <select id="node-input-dataflowStatus" placeholder="Dataflow">
+        
+      </select>
+    </div>
+     <div class="form-row">
+      <label for="node-input-dataflowIdentification"><i class="icon-tag"></i> Dataflow </label>
+      <input  disabled="disabled" type="text" id="node-input-dataflowIdentification" placeholder="Dataflow">
+    </div>
+    <div class="form-row " >
+        <label for="node-input-resetOrigin"><i class="icon-tag"></i> Reset origin </label>
+        <input type="checkbox" id="node-input-resetOrigin" style="display:inline-block; width:15px; vertical-align:baseline;">
+        
+    </div>
+    <div class="form-row node-input-parameters-container-row">
+        <label for="node-input-parameters-container"><i class="icon-tag"></i> Parameters </label> 
+        <ol id="node-input-parameters-container"></ol>
+    </div>
+   
+    <input type="hidden" name="selectDataflowStatus" value="">
+    <script type="text/javascript">
+        
+         var insertedLista = false;
+
+    onElementInserted('body', '#node-input-dataflowStatus', function(element) {
+                         
+
+                 while(insertedLista == false){ 
+                  $('#node-input-dataflowStatus').append('<option value='+""+'>'+""+'</option>');
+                    $.each(listaDataflowsUsuario, function (i, item) {
+                    $('#node-input-dataflowStatus').append('<option value="'+item+'">'+item+'</option>');
+                });
+
+                      
+              insertedLista = true; 
+          }
+          
+
+                  if( $('#node-input-dataflowIdentification').val()!=null &&  $('#node-input-dataflowIdentification').val()!=""){
+                     $('#node-input-dataflowStatus').val( $('#node-input-dataflowIdentification').val());
+                  }
+
+           $('#node-input-dataflowStatus').change(function(){
+                        $('input[name=selectDataflowStatus]').val( $('#node-input-dataflowStatus').val());
+                        
+                        if($('#node-input-dataflowIdentification').val() !=  $('#node-input-dataflowStatus').val()){
+                            $('#node-input-dataflowIdentification').val($('#node-input-dataflowStatus').val());   
+                        }
+                        
+
+
+                      }); 
+       
+      }); 
+        
+          
+
+     </script>
+    
+  </script>
+
+  <script type="text/x-red" data-help-name="Start Dataflow">
+    <p>Node for starting the execution of a specific Dataflow.</p>
+    <p><code>Name</code> It is used to identity the node by a specific name. 
+    This is an optional field.</p>
+    <p><code>Dataflow</code> Name of the dataflow to start. If the incoming message has the property <code>msg.dataflowIdentification</code> defined, its value will be used instead.</p>
+    <p><code>Reset origin</code>  Resets dataflow origin pointer if checked. If the incoming message has the property <code>msg.resetOrigin</code> defined, its value will be used instead.</p>
+    <p><code>Parameters</code> Allows to send parameters to the dataflows.  If the incoming message has the property <code>msg.parameters</code> defined, its value will be used instead.</p>
+
+    <p>The output message has the following attributes:</p>
+    <p><code>payload</code>The result of the Start command. </p>
+    <p><code>ok</code>A boolean that specifies whether the start command was successfully executed.</p>
+  </script>
+</html>

@@ -1,0 +1,478 @@
+<!-- Onesait Platform Notebook Node-RED node HTML file -->
+	<script type="text/x-red" data-template-name="Notebook Launcher">
+
+		<div class="form-row">
+			<label for="node-input-notebookname" style="width: 130px;"><i class="fa fa-tag"></i> Name</label>
+			<input style="width:390px" type="text" id="node-input-notebookname"/>
+			<br/><br/>
+			<label for="node-input-topic" style="width: 130px;"><i class="fa fa-book"></i> Onesait Platform Notebook</label>
+			<select style="width:390px" id="node-input-notebook">
+			</select>
+			<input type="hidden" id="node-input-notebookint"/>
+			<br/><br/>
+			<label style="width: auto;" for="node-input-workflow"><i class="fa fa-random"></i> Workflow mode</label>
+			<input style="width: 16px;margin-left: 0px; vertical-align: sub;" type="checkbox" id="node-input-workflow">
+			<label style="width:105px;margin-left:20px" for="node-input-timeoutnotebook"><i class="fa fa-clock-o"></i> Timeout(seg)</label>
+			<input type="text" id="node-input-timeoutnotebook" value="3000" style="text-align:end; width:70px !important">
+			
+			<div style="margin-top:10px" class="form-row">
+				<ul style="background: #fff; min-width: 600px; margin-bottom: 20px;" id="notebook-tabs-list"></ul>
+			</div>
+			<div id="notebook-tabs" style="min-height: 170px;">
+				<div id="inputs-notebook-tab" style="display:none">
+					<div style="margin-top: 10px;" class="form-row">
+						<label style="width: auto;" for="node-input-fullexecutionnotebook"><i class="fa fa-bolt"></i> Execute entire notebook</label>
+						<input style="width: 16px;margin-left: 0px; vertical-align: sub;" type="checkbox" id="node-input-fullexecutionnotebook">
+					</div>
+					<div style="width:100%;margin-top:10px" id="nodeParametersForm">
+						<input type="hidden" id="node-input-nodeparagraphform"/>
+						<input type="hidden" id="node-input-nodeparameters"/>
+						<input type="hidden" id="node-input-outputparameters"/>
+						<label style="width:195px;" for="node-input-paragraph"><i class="icon-th-list"></i> Input Paragraph selection</label>
+						<select style="width:390px" id="paragraphSelection" placeholder="Paragraph selection">
+						</select>
+						<span style="display:none;" id="labelParamMapping">
+							<div class="form-row" style="margin-bottom:5px;margin-top:10px">
+								<label style="width: 200px;"><i class="fa fa-wrench"></i> <span> Input Parameters mapping</span></label>
+							</div>
+							<div class="form-row node-input-rule-container-row" style="border: 2px solid powderblue; padding-top: 10px;">
+								<ol id="parametersMapping"></ol>
+							</div>
+						</span>
+					</div>
+					
+				</div>
+				<div id="outputs-notebook-tab" style="display:none">
+					<div class="form-row">
+						<label style="width: auto;margin-top: 6px;" for="node-input-enableoutputs"><i class="fa fa-sitemap"></i> Enable Paragraph Output</label>
+						<input style="width: 16px;margin-left: 0px; vertical-align: sub;" type="checkbox" id="node-input-enableoutputs">
+						<span style="display:none" id="outputForm">
+							<span class="split" ><label class="split" style="width: 130px;" for="node-input-outputs"><i class="icon-list-ol"></i> <span>Outputs Number</span></label>
+							<input class="split" id="node-input-outputs" style="width: 60px;" value="1"></span>
+							<span class="nosplit" ><label class="nosplit" style="width: 130px;" for="node-input-outputsnosplit"><i class="icon-list-ol"></i> <span>Outputs Number</span></label>
+							<input class="nosplit" id="node-input-outputsnosplit" style="width: 60px;" value="1"></span>
+							<label style="width: auto;" for="node-input-splitoutputs"><i class="icon-code-fork"></i> Split Outputs</label>
+							<input style="width: 16px;margin-left: 0px; vertical-align: sub;" type="checkbox" id="node-input-splitoutputs">
+							<span style="display:none;" id="labelParamOutputMapping">
+								<div class="form-row" style="margin-bottom:5px;margin-top:10px">
+									<label style="width: 210px;"><i class="fa fa-wrench"></i> <span> Output Parameters mapping</span></label>
+								</div>
+								<div class="form-row node-input-rule-container-row" style="border: 2px solid powderblue; padding-top: 10px;">
+									<ol id="parametersOutputMapping"></ol>
+								</div>
+							</span>
+						</span>
+					</div>
+				</div>
+			</div>
+			
+		</div>
+
+		<br/>
+
+	</script>
+
+	<script type="text/x-red" data-help-name="Notebook Launcher">
+	   <span><img style="margin-left: 5px;" src="icons/platform_logo.png"/><h2 style="display:inline"> Onesait Platform Notebook Launcher</h2>
+	   <p><code>Onesait Platform Notebook</code> Selection of user notebook.</p>
+	   <p><code>Workflow mode</code> If activated, execute the node waiting for all Onesait Platform notebook inputs.</p>
+	   <p><code>Timeout</code> Timeout in seconds of Onesait Platform notebook from node input paragraph to execution complete. If timeout is reach Onesait Platform notebook execution will be stopped and no output will be send</p>
+	   <h3>Inputs & Execution</h3>
+	   <p><code>Input Paragraph selection</code> Optional selection of input paragraph of Onesait Platform notebook. The input paragraph will be executed before the entire notebook to set its parameters</p>
+	   <p><code>Input Parameters mapping</code> When a parameter paragraph is selected, all its input fields will be listed here. Each input field can have one of these input type:<br/>
+	   <ul>
+			<li><code>msg</code> Message of previous node. The input text field is the key in the message to set. Example: payload --> msg.payload</li>
+			<li><code>flow</code> Flow context input, common to all nodes in the same tab. The input text field is the "key" for the value in the flow context</li>
+			<li><code>global</code> Global context input, common to all nodes in the domain. The input text field is the "key" for the value in the global context.</li>
+			<li><code>string</code> Direct input of string value to set</li>
+			<li><code>number</code> Direct input of number value to set</li>
+			<li><code>boolean</code> Direct input of boolean value to set</li>
+			<li><code>timestamp</code> Unix time of the machine. </li>
+	   </ul>
+	   </p>
+	   <p><code>Execute entire notebook</code>If activated, execute the entire notebook after input paragraph.</p>
+	   <h3>Outputs</h3>
+	   <p><code>Enable Paragraph Output</code> If activated, output of notebook is enabled. </p>
+	   <p><code>Outputs Number</code> Number of paragraph outputs that the Onesait Platform notebook execution will have. </p>
+	   <p><code>Split Outputs</code> If activated, outputs of notebook are splitted to diferent output channel. If not activated, outputs are sending through the same channel sorted</p>
+	   <p><code>Output Parameters mapping</code> List of Onesait Platform notebook outputs (depending directly of Outputs number), each output will be determinated for a paragraph and a topic. </p>
+	   
+	</script>
+	<script type="text/javascript" src="config/onesait-platform-config.js"></script>
+	<script type="text/javascript">
+		var auth = getParameterByName('authentication');
+		RED.nodes.registerType('Notebook Launcher',{
+			category: 'analytics',     
+			defaults: {  
+				notebook: {value:"Select Notebook", required:true}, 
+				notebookname: {value:""},
+				notebookint: {value:""},
+				workflow: {value:true},
+				timeoutnotebook: {value:300, validate:RED.validators.number()},
+				nodeparameters: {value:""},
+				nodeparagraphform: {value:""},
+				fullexecutionnotebook: {value:true},
+				outputs: {value:1},
+				outputsnosplit: {value:1},
+				outputparameters:{value:[]},
+				splitoutputs:{value: true},
+				enableoutputs:{value: false},
+				authentication: {value: auth}
+			},
+			inputs:1,
+			outputs:1,
+			outputLabels: function(i) {
+				return JSON.parse(this.outputparameters)[i].paragraphDesc;
+				//return this.id+" output #"+i;
+			},
+			icon: "platform_logo.png",
+			color: '#C0DEED',
+			label: function() { 
+				return "Notebook: " + this.notebookname||"Notebook: Not selected";
+			},
+			labelStyle: function() {
+				return this.notebook?"node_label_italic":"";
+			},
+			oneditprepare: function() {
+				$( "#node-input-timeout" ).spinner({min:5});
+				
+				//Properties from OnesaitPlatform config
+				var scriptBasePath = onesaitPlatformConfig.notebooks;
+				//Parameters to config
+				var onesaitPlatformNotebookUrlService=scriptBasePath + '/script/services/api_motorflujo/v01/notebooks'
+				var onesaitPlatformNotebookUrlServiceInfo=scriptBasePath + '/script/services/api_motorflujo/v01/notebookInfo'
+				
+				var getNotebookInfoPath="/api/notebook";
+				//recover previous values
+				var jsonParams = (($("#node-input-nodeparameters").val()=="")?{}:JSON.parse($("#node-input-nodeparameters").val()));
+				var jsonParamsOutput = ((!$("#node-input-outputparameters").val() || $("#node-input-outputparameters").val()=="")?[]:JSON.parse($("#node-input-outputparameters").val()));
+				var previousParagraphForm = $("#node-input-nodeparagraphform").val();
+				$("#paragraphSelection").change(reloadInputForm);
+				var tabs = RED.tabs.create({
+					id: "notebook-tabs-list",
+					onchange: function(tab) {
+						$("#notebook-tabs").children().hide();
+						$("#" + tab.id).show();
+					}
+				});
+				tabs.addTab({
+					id: "inputs-notebook-tab",
+					label: "Inputs & Execution"
+				});
+				tabs.addTab({
+					id: "outputs-notebook-tab",
+					label: "Outputs"
+				});
+				setTimeout(function() { tabs.resize()},0);
+				$( "#node-input-outputs" ).spinner({
+					min:1,
+					spin:function(){window.setTimeout(function(){$("#node-input-outputsnosplit").val($("#node-input-outputs").val());reloadOutputForm();});}
+				});
+				
+				setTimeout(function() { tabs.resize()},0);
+				$( "#node-input-outputsnosplit" ).spinner({
+					min:1,
+					spin:function(){window.setTimeout(reloadOutputForm);}
+				});
+				
+				$("#node-input-splitoutputs").change(
+					function(){
+						if ($("#node-input-splitoutputs").prop("checked") === true) {
+							$("#node-input-outputs").val($("#node-input-outputsnosplit").val());
+							
+							$("#labelParamOutputMapping").show();
+							$(".nosplit").show();
+						} else {
+							$("#node-input-outputs").val(1);
+							
+							$(".nosplit").hide();
+							$("#labelParamOutputMapping").hide();
+						}
+					}
+				);
+				
+				$("#node-input-enableoutputs").change(
+					function(){
+						if ($("#node-input-enableoutputs").prop("checked") === true) {
+							$("#node-input-outputs").val($("#node-input-outputsnosplit").val());
+							$("#outputForm").show();
+						} else {
+							$("#node-input-outputs").val(1);
+							$("#outputForm").hide();
+						}
+					}
+				);
+
+				$('#node-input-fullexecutionnotebook').change(
+					function(){
+						if ($("#node-input-fullexecutionnotebook").prop("checked") === true){
+							//Enable outputs config
+							$('#node-input-enableoutputs').removeAttr("disabled");
+							$('#node-input-enableoutputs').prop('checked', true);
+							
+							$("#outputForm").show();
+							//Disable inputs
+							$("#nodeParametersForm").hide();
+
+
+							if ($("#node-input-splitoutputs").prop("checked") === true) {
+								//$("#node-input-outputs").val($("#node-input-outputsnosplit").val());
+					
+								$("#labelParamOutputMapping").show();
+								$(".nosplit").show();
+							} else {
+								$("#node-input-outputs").val(1);
+					
+								$(".nosplit").hide();
+								$("#labelParamOutputMapping").hide();
+							}
+
+
+						} else {
+							
+							//disable outputs config. Output must just be the paragraph reuslt
+
+							$("#node-input-splitoutputs").prop('checked', false);
+							$('#node-input-enableoutputs').prop('checked', false);
+							$('#node-input-enableoutputs').attr("disabled", true);
+							$("#outputForm").hide();
+							//Enable inputs
+							$("#nodeParametersForm").show();
+							$("#node-input-outputs").val(1);
+					
+								$(".nosplit").hide();
+								$("#labelParamOutputMapping").hide();
+							
+						}
+					}
+				);
+				
+				$('#node-input-notebook').change(
+					function(){
+						if($('#node-input-notebook').val()!=null){
+							$('#node-input-notebookint').val($('#node-input-notebook').val());
+							$("#node-input-notebookname").val($('#node-input-notebook option:selected').text());
+							getNotebookJSONData($('#node-input-notebook').val());
+						}
+					}
+				);
+				
+				if($( "#node-input-outputs" ).val()==""){
+					$( "#node-input-outputs" ).spinner("value",1);
+					$( "#node-input-outputsnosplit" ).spinner("value",1);
+				}
+				
+				//bug primer filed typeinput
+				$('#parametersMapping').on('DOMSubtreeModified propertychange', function() {
+					setTimeout(function() { $(".red-ui-typedInput-container").css("width","60%");},0);
+				});
+
+
+				//Code
+				var notebookID;
+				var notebookJSON;
+				
+				function getParameterByName(name, url) {
+			        if (!url) {
+			          url = window.location.href;
+			        }
+			        name = name.replace(/[\[\]]/g, "\\$&");
+			        var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+			            results = regex.exec(url);
+			        if (!results) return null;
+			        if (!results[2]) return '';
+			        return decodeURIComponent(results[2].replace(/\+/g, " "));
+			    }
+							
+				
+				function getNotebookJSONData(notebookIDParam){
+					
+					var jsonCallbackName = 'NotebookInfo';
+			        var urlService = onesaitPlatformConfig.scriptBasePath + '/node/services/user/notebooks/paragraphs?notebookZeId='+notebookIDParam+'&authentication=';
+			        var url = urlService + auth + '&callback=' +jsonCallbackName;
+					$.ajax({
+						url: url, 
+						dataType: "jsonp",
+						timeout:30000,
+						jsonpCallback: jsonCallbackName,
+						success: function(response, textStatus, jqXHR) {
+							
+							if(textStatus == "success"){
+								notebookID=notebookIDParam;
+								notebookJSON=JSON.parse(response);
+								$("#parametersMapping").show(1000).css('display','block');
+								$('#paragraphSelection').find('option').remove().end();
+								$('#paragraphSelection').append($('<option>',
+									{
+										value: "",
+										text: "No input paragraph",
+										title: "No input paragraph"
+									})
+								);
+								for(var paragraph=0;paragraph<notebookJSON.paragraphs.length;paragraph++){
+									$('#paragraphSelection').append($('<option>',
+										{
+											value: notebookJSON.paragraphs[paragraph].id,
+											text: notebookJSON.paragraphs[paragraph].id + ' (' + (notebookJSON.paragraphs[paragraph].title?notebookJSON.paragraphs[paragraph].title:paragraph) + ')',
+											title: notebookJSON.paragraphs[paragraph].text
+										})
+									);
+								}
+								$("#paragraphSelection").val(previousParagraphForm)
+								$("#paragraphSelection").change();
+								reloadOutputForm();
+							}
+							else{
+								console.log("Error text status")
+							}
+						}
+						,
+						error: function(xhr, status, error) {
+							console.log(JSON.stringify(error))
+						}
+					})
+				}
+				
+				function reloadInputForm(){
+					$("#labelParamMapping").hide();
+					var paragraphID = $("#paragraphSelection").val();
+					notebookJSON.paragraphs.filter(function(paragraph){return paragraph.id==paragraphID}).map(function(paragraph){
+						$('#parametersMapping').html('');
+						var emptyParagraph = true;
+						for(var field in paragraph.settings.forms){
+							emptyParagraph=false;
+							var valueTemp="";
+							var typeTemp="msg";
+							if(field in jsonParams){
+								valueTemp=jsonParams[field].value;
+								typeTemp=jsonParams[field].type;
+							}
+							$('#parametersMapping').append('<div class="form-row"><label style="width=30%; margin-right:10px" for="node-input-' + field + '"><i class="fa fa-sign-in"></i> ' + field + '</label><input type="text" style="width=60%;" class="node-input" id="node-input-' + field + '" placeholder=""><input type="hidden" class="node-input" id="node-input-' + field + '_type" placeholder="" value="' + typeTemp + '"></div>');
+							$("#node-input-" + field).val(valueTemp);
+							$("#node-input-" + field + "_type").val(typeTemp);
+							$("#node-input-" + field).typedInput({
+								default: 'msg',
+								typeField: $("#node-input-" + field + "_type"),
+								types:['msg','flow','global','str','num','bool','date']
+							});
+							$("#node-input-" + field).typedInput('width','60%');
+							$("#labelParamMapping").show();
+						}
+						if(emptyParagraph){
+							$("#labelParamMapping").show();
+							$('#parametersMapping').append('<div class="form-row"><b>No parameters found in paragraph ' + paragraphID + '</b></div>');
+						}
+					});
+				}
+				
+				function reloadOutputForm(){
+					if ($("#node-input-splitoutputs").prop("checked") === true) {
+						$("#node-input-outputs").val($("#node-input-outputsnosplit").val());
+						$(".split").hide();
+						$(".nosplit").show();
+						$("#labelParamOutputMapping").show();
+					} else {
+						$("#node-input-outputs").val(1);
+						$(".split").hide();
+						$(".nosplit").hide();
+						$("#labelParamOutputMapping").hide();
+					}
+					$('#parametersOutputMapping').html('');
+					for(var output=0;output<$("#node-input-outputsnosplit").val()&&notebookJSON;output++){
+						var paragraphTemp=notebookJSON.paragraphs[0].id;
+						var topicTemp="";
+						if(jsonParamsOutput.length>output){
+							paragraphTemp=jsonParamsOutput[output].paragraph;
+							topicTemp=jsonParamsOutput[output].topic;
+						}
+						$('#parametersOutputMapping').append('<div class="form-row"><label for="node-input-output-' + output + '"><i class="fa fa-sign-out"></i> Output ' + output + '</label><select class="node-output" id="node-input-output-' + output + '" placeholder="" value="' + paragraphTemp + '"/></div>');
+						for(var paragraph=0;paragraph<notebookJSON.paragraphs.length;paragraph++){
+							$('#node-input-output-' + output).append($('<option>',
+								{
+									value: notebookJSON.paragraphs[paragraph].id,
+									text: notebookJSON.paragraphs[paragraph].id + ' (' + (notebookJSON.paragraphs[paragraph].title?notebookJSON.paragraphs[paragraph].title:paragraph) + ')',
+									title: notebookJSON.paragraphs[paragraph].text
+								})
+							);
+						}
+						$('#node-input-output-' + output).val(paragraphTemp);
+					}
+					//$("#labelParamOutputMapping").show();
+				}
+				
+				
+				function getNotebooks(){
+					
+					var jsonCallbackName = 'restApiList';
+			        var urlService = onesaitPlatformConfig.scriptBasePath + '/node/services/user/notebooks?authentication=';
+			        var url = urlService + auth + '&callback=' +jsonCallbackName;
+					$.ajax({
+						url: url, 
+						dataType: "jsonp",
+						timeout:5000,
+						jsonpCallback: jsonCallbackName,
+						success: function(data, textStatus, jqXHR) {
+							if(textStatus == "success"){
+								var notebooks = data;
+								for(var notebook=0;notebook<notebooks.length;notebook++){
+									$('#node-input-notebook').append($('<option>',
+										{
+											value: notebooks[notebook].id,
+											text: notebooks[notebook].name,
+											title: notebooks[notebook].name
+										})
+									);
+								}
+								$('#node-input-notebook').val($('#node-input-notebookint').val());
+								if($("#node-input-notebookname").val()==""){
+									 $("#node-input-notebookname").val($('#node-input-notebook option:selected').text());
+								}
+								if($("#node-input-notebookname").val()!=""){
+									getNotebookJSONData($('#node-input-notebook').val());
+								}
+							} else {
+								console.log("Unable to load user Notebooks.");
+							}
+						}
+						,
+						error: function(xhr, status, error) {
+							console.log(JSON.stringify(error));
+						}
+					});
+				}
+				
+				getNotebooks();
+				
+			},
+			oneditsave: function() {
+				var jsonParam = {};
+				$(".node-input").each(
+					function(){
+						jsonParam[this.id.split("-")[2]]={type:$("#"+this.id+"_type").val(),value:this.value};
+					}
+				)
+				$("#node-input-nodeparameters").val(JSON.stringify(jsonParam));
+				
+				var jsonParamOutput = [];
+				$(".node-output option:selected").each(
+					function(){
+						//jsonParamOutput.push({paragraph:this.value,topic:$("#"+this.id+"_topic").val()});
+						jsonParamOutput.push({paragraph:this.value, paragraphDesc:this.text});
+					}
+				)
+				if (!$("#node-input-enableoutputs").prop("disabled"))  {
+					outputs = parseInt($("#node-input-outputs").val());
+				} else {
+					outputs = 1;
+				}
+
+				$("#node-input-outputparameters").val(JSON.stringify(jsonParamOutput));
+				
+				$("#node-input-nodeparagraphform").val($("#paragraphSelection").val());
+				
+				if($("#node-input-notebookname").val()==""){
+					$("#node-input-notebookname").val($('#node-input-notebook option:selected').text());
+				}
+			}
+		});
+	</script>
