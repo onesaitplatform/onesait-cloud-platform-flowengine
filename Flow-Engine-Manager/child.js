@@ -1,4 +1,3 @@
-
 var http = require('http');
 var express = require("express");
 var RED = require("node-red");
@@ -43,10 +42,10 @@ const transformer = function transformer(logData) {
 };
 
 // GELF configuration
-/*${COMMENT_GRAYLOG_START}
+${COMMENT_GRAYLOG_START}
 var gelfLog = require('gelf-pro');
 gelfLog.setConfig({
-  fields: {app_name: "NodeRED", domain: process.env.domain}, // optional; default fields for all messages
+  fields: {app_name: "NodeRED", domain: domain}, // optional; default fields for all messages
   filter: [], // optional; filters to discard a message
   transform: [transformer], // optional; transformers for a message
   broadcast: [], // optional; listeners of a message
@@ -55,16 +54,15 @@ gelfLog.setConfig({
   adapterName: 'udp', // optional; currently supported "udp", "tcp" and "tcp-tls"; default: udp
   adapterOptions: { // this object is passed to the adapter.connect() method
     // common
-    host: '192.168.1.249', // optional; default: 127.0.0.1
-    port: 12201, // optional; default: 12201
+    host: '${GRAYLOG_HOST}', // optional; default: 127.0.0.1
+    port: ${GRAYLOG_PORT}, // optional; default: 12201
     // tcp adapter example
-    //family: 4, // tcp only; optional; version of IP stack; default: 4
-    //timeout: 1000 // tcp only; optional; default: 10000 (10 sec)
-    
+    // family: 4, // tcp only; optional; version of IP stack; default: 4
+    // timeout: 1000 // tcp only; optional; default: 10000 (10 sec)
+
   }
 });
-
-//${COMMENT_GRAYLOG_END}*/
+${COMMENT_GRAYLOG_END}
 
 // Create the settings object - see default settings.js file for other options
 
@@ -72,22 +70,23 @@ var domain = process.env.domain;
 var port = process.env.port;
 var home = process.env.home;
 var servicePort = process.env.servicePort;
-/*${COMMENT_PROXY_START}
+${COMMENT_PROXY_START}
 process.env.http_proxy = '${HTTP_PROXY}';
 process.env.https_proxy = '${HTTPS_PROXY}';
 process.env.no_proxy = '${NO_PROXY}';
-${COMMENT_PROXY_END}*/
+${COMMENT_PROXY_END}
  //settings NODE-RED
 	 settings = {
 	    httpAdminRoot:"/"+domain,
 	    httpNodeRoot: "/"+domain,
 	    userDir:home,
 	    flowFile:home+"/flows_"+domain+".json",
+      credentialSecret: '${FLOW_SECRET}',
 	    servicePortOnesaitPlatform : servicePort,
-	    functionGlobalContext: { }   , 
+	    functionGlobalContext: { }   ,
         // Timeout in milliseconds for HTTP request connections
-        httpRequestTimeout: 20000,
-        socketTimeout: 20000,
+        httpRequestTimeout: ${HTTPREQUESTTIMEOUT},
+        socketTimeout: ${SOCKETTIMEOUT},
         httpStatic: [{path:'/opt/nodeRed/Flow-Engine-Manager/public/'}],
         nodesDir: "/opt/nodeRed/Flow-Engine-Manager/onesait-platform/nodes/",
 	    // enables global context
@@ -114,7 +113,7 @@ ${COMMENT_PROXY_END}*/
 	    },
 	    adminAuth: require("./node_modules/node-red/user-authentication")
         ,
-       /* ${COMMENT_START}
+        ${COMMENT_START}
 	    httpNodeMiddleware:  async function(req,res,next) {
 		    // Perform any processing on the request.
 		    // Be sure to call next() if the request should be passed
@@ -144,7 +143,6 @@ ${COMMENT_PROXY_END}*/
 		    }
 		},
         ${COMMENT_END}
-        */
 	    logging: {
             console: {
                 level: "info",
@@ -162,8 +160,8 @@ ${COMMENT_PROXY_END}*/
                     }
                 }
             }
-            /*${COMMENT_GRAYLOG_START}
              // Custom GELF logger
+            ${COMMENT_GRAYLOG_START}
             ,myCustomGelfLogger: {
                 level: 'info',
                 audit: false,
@@ -178,7 +176,7 @@ ${COMMENT_PROXY_END}*/
                     }
                 }
             }
-        //${COMMENT_GRAYLOG_END}*/
+            ${COMMENT_GRAYLOG_END}
         }
 	};
 
@@ -224,7 +222,7 @@ function stats(pid) {
     		if(pid==null){
                   resolve({});
             }
-    		pusage.stat(pid, (err, data) => {
+    		pusage(pid, (err, data) => {
                 if (err) {
                     reject(err)
                 }
@@ -305,6 +303,7 @@ if (process.env.PROMETHEUS_ENABLED == 'true'){
 
 // Create a server
 var server = http.createServer(app);
+
 // Initialise the runtime with a server and settings
 RED.init(server,settings);
 
@@ -313,9 +312,6 @@ app.use(settings.httpAdminRoot,RED.httpAdmin);
 
 // Serve the http nodes UI from /api
 app.use(settings.httpNodeRoot,RED.httpNode);
-
-
-
 
 server.listen(port);
 
