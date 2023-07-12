@@ -137,7 +137,7 @@
 				$( "#node-input-timeout" ).spinner({min:5});
 				
 				//Properties from OnesaitPlatform config
-				var scriptBasePath = onesaitPlatformConfig.notebooks;
+				var scriptBasePath = onesaitPlatformConfig.scriptBasePath;
 				//Parameters to config
 				var onesaitPlatformNotebookUrlService=scriptBasePath + '/script/services/api_motorflujo/v01/notebooks'
 				var onesaitPlatformNotebookUrlServiceInfo=scriptBasePath + '/script/services/api_motorflujo/v01/notebookInfo'
@@ -288,7 +288,7 @@
 				function getNotebookJSONData(notebookIDParam){
 					
 					var jsonCallbackName = 'NotebookInfo';
-			        var urlService = onesaitPlatformConfig.scriptBasePath + '/node/services/user/notebooks/paragraphs?notebookZeId='+notebookIDParam+'&authentication=';
+			        var urlService = onesaitPlatformConfig.scriptBasePath + '/flowengine/node/services/user/notebooks/paragraphs?notebookZeId='+notebookIDParam+'&authentication=';
 			        var url = urlService + auth + '&callback=' +jsonCallbackName;
 					$.ajax({
 						url: url, 
@@ -404,7 +404,7 @@
 				function getNotebooks(){
 					
 					var jsonCallbackName = 'restApiList';
-			        var urlService = onesaitPlatformConfig.scriptBasePath + '/node/services/user/notebooks?authentication=';
+			        var urlService = onesaitPlatformConfig.scriptBasePath + '/flowengine/node/services/user/notebooks?authentication=';
 			        var url = urlService + auth + '&callback=' +jsonCallbackName;
 					$.ajax({
 						url: url, 

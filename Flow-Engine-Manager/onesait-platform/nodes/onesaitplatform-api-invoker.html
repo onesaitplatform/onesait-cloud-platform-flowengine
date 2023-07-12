@@ -205,7 +205,7 @@
         if(selectedName!=""){
             var jsonCallbackName2 = 'restApiOperationsList';
             var selectedVersion = $('#node-input-restApiVersion').val();
-            var urlService = onesaitPlatformConfig.scriptBasePath + '/node/services/user/api/rest/operations?apiName='+selectedName+'&version='+selectedVersion+'&authentication=';
+            var urlService = onesaitPlatformConfig.scriptBasePath + '/flowengine/node/services/user/api/rest/operations?apiName='+selectedName+'&version='+selectedVersion+'&authentication=';
             var url = urlService + auth + '&callback=' +jsonCallbackName2;
 
             $.ajax({
@@ -313,7 +313,7 @@
     function getRestApiList(){
 
         var jsonCallbackName = 'restApiList';
-        var urlService = onesaitPlatformConfig.scriptBasePath + '/node/services/user/api/rest?authentication=';
+        var urlService = onesaitPlatformConfig.scriptBasePath + '/flowengine/node/services/user/api/rest?authentication=';
         var url = urlService + auth + '&callback=' +jsonCallbackName;
      
 

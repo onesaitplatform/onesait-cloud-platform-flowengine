@@ -1,0 +1,1 @@
+cmd_Release/obj.target/libnodegcplugin.so := g++ -shared -pthread -rdynamic -m64  -Wl,-soname=libnodegcplugin.so -o Release/obj.target/libnodegcplugin.so -Wl,--whole-archive ./Release/obj.target/nodegcplugin/src/plugins/node/gc/nodegcplugin.o -Wl,--no-whole-archive 
