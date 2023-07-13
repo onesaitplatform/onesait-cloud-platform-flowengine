@@ -55,7 +55,7 @@ var winston = require('winston')
   return transformed;
 };
 
-/*${COMMENT_GRAYLOG_START}
+${COMMENT_GRAYLOG_START}
   const options = {
     gelfPro: {
         fields: {app_name: "NodeRED", domain: "app.js"}, // optional; default fields for all messages
@@ -67,13 +67,11 @@ var winston = require('winston')
         adapterName: 'udp', // optional; currently supported "udp", "tcp" and "tcp-tls"; default: udp
         adapterOptions: { // this object is passed to the adapter.connect() method
             // common
-            //host: '${GRAYLOG_HOST}', // optional; default: 127.0.0.1
-            //port: ${GRAYLOG_PORT}, // optional; default: 12201
-            host: 'localhost', // optional; default: 127.0.0.1
-            port: 12201, // optional; default: 12201
+            host: '${GRAYLOG_HOST}', // optional; default: 127.0.0.1
+            port: ${GRAYLOG_PORT}, // optional; default: 12201
             // tcp adapter example
-            //family: 4, // tcp only; optional; version of IP stack; default: 4
-            //timeout: 1000 // tcp only; optional; default: 10000 (10 sec)     
+            //  family: 4, // tcp only; optional; version of IP stack; default: 4
+            // timeout: 1000 // tcp only; optional; default: 10000 (10 sec)     
     }
   }
       
@@ -81,14 +79,14 @@ var winston = require('winston')
  
   const gelfTransport = new GelfTransport(options);
  
-/*${COMMENT_GRAYLOG_END}*/
+${COMMENT_GRAYLOG_END}
   const logger = winston.createLogger({
     transports: [
       new winston.transports.Console()
-    /*${COMMENT_GRAYLOG_START}
+    ${COMMENT_GRAYLOG_START}
       , gelfTransport
       
-    /*${COMMENT_GRAYLOG_END}*/
+    ${COMMENT_GRAYLOG_END}
     ]
   });
 
@@ -1158,7 +1156,7 @@ app.post('/stopMF', function(req, res) {
     }
 });
 
-/*
+
 if (process.env.PROMETHEUS_ENABLED == 'true'){
 
     async function getMetrics(options) {
@@ -1177,7 +1175,7 @@ if (process.env.PROMETHEUS_ENABLED == 'true'){
                     return resolve(body);
                 });
             }).on('error', function(e) {
-                return reject(error);
+                return resolve(''); //if any error happens, no metrics are exported for that domain
             });
         });
     }
@@ -1212,7 +1210,7 @@ if (process.env.PROMETHEUS_ENABLED == 'true'){
         return res.send(allMetrics);
     });
 }
-*/
+
 // Create a server
 var server = http.createServer(app);
 server.listen(administrationPort);

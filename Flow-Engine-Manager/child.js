@@ -1,5 +1,3 @@
-var dash = require('appmetrics-dash');
-//dash.attach();
 var http = require('http');
 var express = require("express");
 var RED = require("node-red");
@@ -218,30 +216,6 @@ function  tokenValidation(opts, postData) {
     });
 }
 
-
-myMiddleware = async function auhtneticationMiddlewareFormetrics(req, res,next){
-	if(req.path == "/"+domain+"/appmetrics-dash/"){
-		if (typeof req.query['x-op-nodekey'] != "undefined" && req.query['x-op-nodekey'] != null) {
-			var opts = {};
-	    	opts.hostname = "localhost";
-	    	opts.port = 5050;
-            opts.path = "/"+domain+"/settings";
-            opts.method = "GET";
-            opts.headers = {'Authorization': 'Bearer '+req.query['x-op-nodekey']};
-            opts.encoding = null;
-            try{
-            	queryResult = await tokenValidation(opts);
-            } catch(e){
-            	console.log("Error authenticating:"+JSON.stringify(e))
-            	res.status(401).send('unauthorized');
-            }
-		} else {
-			res.status(401).send('unauthorized');
-		}
-	}
-	next();
-}
-
 function stats(pid) {
     return new Promise((resolve, reject) => {
         try{
@@ -329,11 +303,7 @@ if (process.env.PROMETHEUS_ENABLED == 'true'){
 
 // Create a server
 var server = http.createServer(app);
-options = {};
-options.server = server;
-options.url = "/"+domain +"/appmetrics-dash";
-options.title = "Application Metrics for " + domain + " domain."
-options.middleware = myMiddleware;
+
 // Initialise the runtime with a server and settings
 RED.init(server,settings);
 
@@ -343,11 +313,7 @@ app.use(settings.httpAdminRoot,RED.httpAdmin);
 // Serve the http nodes UI from /api
 app.use(settings.httpNodeRoot,RED.httpNode);
 
-
-
-
 server.listen(port);
-dash.monitor(options);
 
 server.on('error', (e) => {
   if (e.code == 'EADDRINUSE') {
