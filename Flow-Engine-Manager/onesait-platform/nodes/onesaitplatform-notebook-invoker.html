@@ -293,7 +293,7 @@
 					$.ajax({
 						url: url, 
 						dataType: "jsonp",
-						timeout:30000,
+						timeout: onesaitPlatformConfig.onesaitPlatformQueryTimeout,
 						jsonpCallback: jsonCallbackName,
 						success: function(response, textStatus, jqXHR) {
 							
@@ -323,12 +323,13 @@
 								reloadOutputForm();
 							}
 							else{
-								console.log("Error text status")
+								console.log("Error text status");
 							}
 						}
 						,
 						error: function(xhr, status, error) {
-							console.log(JSON.stringify(error))
+							console.log(JSON.stringify(error));
+							showErrorDialogStatic();
 						}
 					})
 				}
@@ -409,7 +410,7 @@
 					$.ajax({
 						url: url, 
 						dataType: "jsonp",
-						timeout:5000,
+						timeout: onesaitPlatformConfig.onesaitPlatformQueryTimeout,
 						jsonpCallback: jsonCallbackName,
 						success: function(data, textStatus, jqXHR) {
 							if(textStatus == "success"){
@@ -437,6 +438,7 @@
 						,
 						error: function(xhr, status, error) {
 							console.log(JSON.stringify(error));
+							showErrorDialogStatic();
 						}
 					});
 				}

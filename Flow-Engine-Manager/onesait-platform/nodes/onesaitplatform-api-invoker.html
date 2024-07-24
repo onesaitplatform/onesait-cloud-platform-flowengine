@@ -211,7 +211,7 @@
             $.ajax({
                 url: url, 
                 dataType: "jsonp",
-                timeout: 10000,
+                timeout: onesaitPlatformConfig.onesaitPlatformQueryTimeout,
                 jsonpCallback: jsonCallbackName2,
                 success: function(data, textStatus, jqXHR) {
                     if(textStatus == "success"){
@@ -320,7 +320,7 @@
         $.ajax({
             url: url, 
             dataType: "jsonp",
-            timeout: 10000,
+            timeout: onesaitPlatformConfig.onesaitPlatformQueryTimeout,
             jsonpCallback: jsonCallbackName,
             success: function(data, textStatus, jqXHR) {
 
