@@ -14,6 +14,8 @@ module.exports = function(RED) {
 		if(file=="") file = null;
 		var htmlenable = n.htmlenable;
         var filedata=null;
+		var mailboxDefault = n.mailboxDefault;
+		var mailbox = n.mailbox;
 
         this.on('input', function(msg) {
 			if(msg.payload.body!="" && msg.payload.body!=null) body = msg.payload.body;
@@ -21,6 +23,8 @@ module.exports = function(RED) {
 			if(msg.payload.to!="" && msg.payload.to!=null) to = msg.payload.to;
 			if(msg.payload.subject!="" && msg.payload.subject!=null) subject = msg.payload.subject;
 			if(msg.payload.htmlenable!=null) htmlenable = msg.payload.htmlenable;
+			if(msg.payload.mailboxDefault!=null) mailboxDefault = msg.payload.mailboxDefault;
+			if(msg.payload.mailbox!=null) mailbox = msg.payload.mailbox;
 			if(msg.payload.filedata!=null && msg.payload.filedata!="") filedata = msg.payload.filedata.toString('base64');
 			var destinations = to.split(';');
 			var regex = /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
@@ -36,7 +40,7 @@ module.exports = function(RED) {
              var args = {
                 requesConfig: { timeout: 5000 },
                 responseConfig: { timeout: 5000 },
-                data: { "to": valid_dest, "subject":subject, "body":body, "filename": file ,"filedata":filedata, "htmlenable" :htmlenable, "domainName": process.env.domain, "verticalSchema": process.env.vertical},
+                data: { "to": valid_dest, "subject":subject, "body":body, "filename": file ,"filedata":filedata, "htmlenable" :htmlenable, "mailboxDefault" :mailboxDefault,"mailbox" :mailbox, "domainName": process.env.domain, "verticalSchema": process.env.vertical},
                 headers: { "Content-Type": "application/json" }
             };
             var endpoint = platformConfig.scriptBasePath + "/flowengine/node/services/sendMail";

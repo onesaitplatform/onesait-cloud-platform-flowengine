@@ -15,14 +15,32 @@
 		body: {value:""},
 		htmlenable: {value:false},
 		file: {value:null},
-        authentication: {value: auth}
+        authentication: {value: auth},
+		mailboxDefault: {value:true},
+		mailbox: {value:""},
       },
       inputs: 1,
       outputs:1,
       icon: "platform_logo.png",
       label: function() {
         return this.name||"onesaitplatform-mail";
-      }
+      },
+	  oneditprepare: function() {
+		function updateMailboxOptions() {
+			if ($("#node-input-mailboxDefault").is(":checked")) {
+				$('#mailboxesList').hide();   
+				$('#mailbox').hide();
+			} else {
+				$('#mailboxesList').show();   
+				$('#mailbox').show();
+			}
+		}
+		updateMailboxOptions();
+		$("#node-input-mailboxDefault").on("click", function() {
+			updateMailboxOptions();
+		});
+
+	}
     });
 
   function showErrorDialogInsert() {
@@ -41,12 +59,11 @@
           }
 
 
-     var listaFilesUsuario;
-     var insertedLista = false;
+     var listaMailboxUsuario;
+     var insertedMailLista = false;
 
 
      function onElementInserted(containerSelector, elementSelector, callback) {
-
         var onMutationsObserved = function(mutations) {
             mutations.forEach(function(mutation) {
                 if (mutation.addedNodes.length) {
@@ -63,7 +80,6 @@
         var MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
         var observer = new MutationObserver(onMutationsObserved);    
         observer.observe(target, config);
-
   }
 
      function getParameterByName(name, url) {
@@ -79,105 +95,83 @@
         return decodeURIComponent(results[2].replace(/\+/g, " "));
     }
 
- /*    function obtenerOntologiasUsuario(){
+     function getMailboxByUser(){
 
+<<<<<<< Updated upstream
      var jsonCallbackName = 'files';
-     var urlService = onesaitPlatformConfig.scriptBasePath + '/node/services/user/files?authentication=';
+     var urlService = onesaitPlatformConfig.scriptBasePath + '/flowengine/node/services/user/files?authentication=';
+=======
+     var jsonCallbackName = 'mailboxes';
+     var urlService = onesaitPlatformConfig.scriptBasePath + '/node/services/user/mailbox?authentication=';
+>>>>>>> Stashed changes
      var url = urlService + auth + '&callback=' +jsonCallbackName;
      
 
      $.ajax({
         url: url, 
         dataType: "jsonp",
-        timeout: onesaitPlatformConfig.onesaitPlatformQueryTimeout,
+        timeout: 10000,
         jsonpCallback: jsonCallbackName,
         success: function(data, textStatus, jqXHR) {
 
             if(textStatus == "success"){
 
-               listaFilesUsuario = data;
-               onElementInserted('body', '#node-input-files', function(element) {
+				listaMailboxUsuario = data;
+				onElementInserted('body', '#node-input-mailboxes', function(element) {
                          
 
-                 while(insertedLista == false){ 
-                  $('#node-input-files').append("<option value='"+""+"'>"+""+"</option>");
-                    $.each(listaFilesUsuario, function (i, item) {
-                    $('#node-input-files').append("<option value='"+item+"'>"+item+"</option>");
-                });
+                while(insertedMailLista == false){ 
+					$.each(listaMailboxUsuario, function (i, item) {
+						$('#node-input-mailboxes').append("<option value='"+item+"'>"+item+"</option>");
+					});
+					insertedMailLista = true; 
+				}
+                if( $('#node-input-mailbox').val()!=null &&  $('#node-input-mailbox').val()!=""){
+                    $('#node-input-mailboxes').val( $('#node-input-mailbox').val());
+                }
 
-                      
-              insertedLista = true; 
-          }
-          
-
-                  if( $('#node-input-file').val()!=null &&  $('#node-input-file').val()!=""){
-                     $('#node-input-files').val( $('#node-input-file').val());
-                  }
-
-           $('#node-input-files').change(function(){
-                        $('input[name=selectfiles]').val( $('#node-input-files').val());
-                        
-                        if($('#node-input-file').val() !=  $('#node-input-files').val()){
-                            $('#node-input-file').val($('#node-input-files').val());   
-                        }
-                        
-
-
-                      }); 
-       
-      }); 
-               
-          
+				$('#node-input-mailboxes').change(function(){
+                    $('input[name=selectMailbox]').val( $('#node-input-mailboxes').val());
+                    if($('#node-input-mailbox').val() !=  $('#node-input-mailboxes').val()){
+                        $('#node-input-mailbox').val($('#node-input-mailboxes').val());   
+                    }
+                }); 
+			}); 
         }
-      }
-       , error: function(xhr, status, error) {
-          
-              
-            if(listaFilesUsuario!=null){
+      },
+	  error: function(xhr, status, error) {
+				
+				if(listaMailboxUsuario!=null){
 
-             onElementInserted('body', '#node-input-files', function(element) {
-                         
+					onElementInserted('body', '#node-input-mailboxes', function(element) {
+						while(insertedMailLista == false){ 
+							$.each(listaMailboxUsuario, function (i, item) {
+								$('#node-input-mailboxes').append("<option value='"+item+"'>"+item+"</option>");
+							});
+							insertedMailLista = true; 
+						}
+						if( $('#node-input-mailbox').val()!=null &&  $('#node-input-mailbox').val()!=""){
+							$('#node-input-mailboxes').val( $('#node-input-mailbox').val());
+						}
 
-                 while(insertedLista == false){ 
-                  $('#node-input-files').append("<option value='"+""+"'>"+""+"</option>");
-                    $.each(listaFilesUsuario, function (i, item) {
-                    $('#node-input-files').append("<option value='"+item+"'>"+item+"</option>");
-                });
-
-                      
-              insertedLista = true; 
-          }
-          
-
-                  if( $('#node-input-file').val()!=null &&  $('#node-input-file').val()!=""){
-                     $('#node-input-files').val( $('#node-input-file').val());
-                  }
-
-           $('#node-input-files').change(function(){
-                        $('input[name=selectfiles]').val( $('#node-input-files').val());
-                        
-                        if($('#node-input-file').val() !=  $('#node-input-files').val()){
-                            $('#node-input-file').val($('#node-input-files').val());   
-                        }
-                        
-
-
-                      }); 
-       
-      }); 
-
-            }else{
-              showErrorDialogStatic();
-            }
+						$('#node-input-mailboxes').change(function(){
+							$('input[name=selectMailbox]').val( $('#node-input-mailboxes').val());
+							if($('#node-input-mailbox').val() !=  $('#node-input-mailboxes').val()){
+								$('#node-input-mailbox').val($('#node-input-mailboxes').val());   
+							}
+						}); 
+					}); 
+				}else{
+					showErrorDialogStatic();
+				}
            } 
-
     })
 
 
     }     
 
-    obtenerOntologiasUsuario(); */
-         
+    getMailboxByUser(); 
+
   </script>
 
   <script type="text/x-red" data-template-name="onesaitplatform-mail">
@@ -211,6 +205,49 @@
       <label for="node-input-file"><i class="icon-tag"></i> Filename</label>
 	  <input type="text" id="node-input-file" placeholder="Attachtment filename">
     </div>
+	<div class="form-row">
+		<input type="checkbox" id="node-input-mailboxDefault" checked="checked" style="display:inline-block; width:15px; vertical-align:baseline;">
+        <label for="node-input-mailboxDefault" style="width: auto" >Use Default mailbox?</label>
+	</div>
+	<div class="form-row hide" id="mailboxesList">
+      <label for="node-input-mailboxes"><i class="icon-th-list"></i>Mailboxes available </label>
+      <select id="node-input-mailboxes" placeholder="Mailboxes">
+        
+      </select>
+    </div>
+	<div class="form-row hide" id="mailbox">
+      <label for="node-input-mailbox"><i class="icon-tag"></i> Mailbox</label>
+      <input  disabled="disabled" type="text" id="node-input-mailbox" placeholder="Mailbox">
+    </div>
+	<input type="hidden" name="selectMailbox" value="">
+	<script type="text/javascript">
+        
+         var insertedMailLista = false;
+
+		onElementInserted('body', '#node-input-mailboxes', function(element) {
+                         
+
+                while(insertedMailLista == false){ 
+					$.each(listaMailboxUsuario, function (i, item) {
+						$('#node-input-mailboxes').append("<option value='"+item+"'>"+item+"</option>");
+					});
+					insertedMailLista = true; 
+				}
+                if( $('#node-input-mailbox').val()!=null &&  $('#node-input-mailbox').val()!=""){
+                    $('#node-input-mailboxes').val( $('#node-input-mailbox').val());
+                }
+
+				$('#node-input-mailboxes').change(function(){
+                    $('input[name=selectMailbox]').val( $('#node-input-mailboxes').val());
+                    if($('#node-input-mailbox').val() !=  $('#node-input-mailboxes').val()){
+                        $('#node-input-mailbox').val($('#node-input-mailboxes').val());   
+                    }
+                }); 
+			}); 
+        
+          
+
+     </script>
   </script>
   <script type="text/x-red" data-help-name="onesaitplatform-mail">
     <p>Node for sending emails.</p>
@@ -219,8 +256,9 @@
     <p><code>To</code> Email of the destination. If you want to send the email to multiple destinations, introduce the different emails separated by semicolons (;). If the incoming message has the property <code>msg.payload.to</code> defined, its value will be used instead.</p>
     <p><code>Subject</code> Brief summary of the email. If the incoming message has the property <code>msg.payload.subject</code> defined, its value will be used instead.</p>
     <p><code>Body</code>  Content of the email. If the incoming message has the property <code>msg.payload.body</code> defined, its value will be used instead.</p>
-	  <p><code>HTML</code>  If checked, the content will be treated as HTML. If the incoming message has the property <code>msg.payload.htmlenable</code> defined, its value will be used instead.</p>
+	<p><code>HTML</code>  If checked, the content will be treated as HTML. If the incoming message has the property <code>msg.payload.htmlenable</code> defined, its value will be used instead.</p>
     <p><code>Filename</code> Attached file with extension (e.g. test.pdf). This is an optional field. If filled in, the content of the file should be injected to this node as a binary buffer. The message field containing the file is <code>msg.payload.filedata</code></p>
-
+	<p><code>Default Mailbox</code>  If checked, use the default platform mailbox <code>msg.payload.mailboxDefualt</code> defined, its value will be used instead.</p>
+	<p><code>Mailbox</code> If default mailbox is unchecked, select the mailbox to use <code>msg.payload.mailbox</code> defined, its value will be used instead.</p>
   </script>
 </html>

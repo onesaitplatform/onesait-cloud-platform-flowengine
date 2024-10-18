@@ -1,0 +1,1 @@
+cmd_Release/obj.target/libnodeprofplugin.so := g++ -shared -pthread -rdynamic -m64  -Wl,-soname=libnodeprofplugin.so -o Release/obj.target/libnodeprofplugin.so -Wl,--whole-archive ./Release/obj.target/nodeprofplugin/src/plugins/node/prof/nodeprofplugin.o -Wl,--no-whole-archive 

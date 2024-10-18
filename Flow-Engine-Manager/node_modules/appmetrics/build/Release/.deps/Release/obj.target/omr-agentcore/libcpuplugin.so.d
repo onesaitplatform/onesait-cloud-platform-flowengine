@@ -1,0 +1,1 @@
+cmd_Release/obj.target/omr-agentcore/libcpuplugin.so := g++ -shared -pthread -rdynamic -m64  -Wl,-soname=libcpuplugin.so -o Release/obj.target/omr-agentcore/libcpuplugin.so -Wl,--whole-archive ./Release/obj.target/cpuplugin/omr-agentcore/src/ibmras/monitoring/plugins/common/cpu/cpuplugin.o -Wl,--no-whole-archive 

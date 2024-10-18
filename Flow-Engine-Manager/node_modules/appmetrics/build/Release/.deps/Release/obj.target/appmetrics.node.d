@@ -1,0 +1,1 @@
+cmd_Release/obj.target/appmetrics.node := g++ -shared -pthread -rdynamic -m64  -Wl,-soname=appmetrics.node -o Release/obj.target/appmetrics.node -Wl,--start-group Release/obj.target/appmetrics/geni/appmetrics.o Release/obj.target/appmetrics/src/headlessutils.o Release/obj.target/appmetrics/src/objecttracker.o -Wl,--end-group 

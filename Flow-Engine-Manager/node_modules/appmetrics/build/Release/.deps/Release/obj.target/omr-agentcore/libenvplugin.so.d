@@ -1,0 +1,1 @@
+cmd_Release/obj.target/omr-agentcore/libenvplugin.so := g++ -shared -pthread -rdynamic -m64  -Wl,-soname=libenvplugin.so -o Release/obj.target/omr-agentcore/libenvplugin.so -Wl,--whole-archive ./Release/obj.target/envplugin/omr-agentcore/src/ibmras/monitoring/plugins/common/environment/envplugin.o -Wl,--no-whole-archive 

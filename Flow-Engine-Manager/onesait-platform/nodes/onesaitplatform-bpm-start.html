@@ -1,0 +1,366 @@
+<html>
+<div style="display: none;" id="dialog-error" title="Se ha producido un error">Se ha perdido la comunicación con la
+  plataforma</div>
+
+<script type="text/x-red" data-help-name="onesaitplatform-Rest-API-invoker">
+  <p>Node that start a BPM Process from the platform.</p>
+  <p><code>Name</code> It is used to identity the node by a specific name. 
+  This is an optional field.</p>
+
+  <p><code>BPM Processes available</code>  Selection of the Rest BPM processes availables in the platform. The selection will be saved in the fields <code>BPM Process</code></p>
+  <p><code>Inputs available</code>  List of inputs from the selected BPM Pocess. The selection will be saved in the fields <code>BPM Process Input</code></p>
+  <p><code>Timeout(millis)</code> Max. time (in milliseconds) that will be waited until the call is aborted.</p>
+  <p><code>Input messages</code> List of input message's values. For each one, a value must be assigned when the message is required (marked with '*'). The structure of the field must be as follows: <code>msg.file = {
+  'fileName':'my-file.jpg',
+  'file':databuffer
+};</code> where "databuffer" is a buffer contaning the file data.</p>
+
+  <p>The outputs will be linked to each <code>statusCode</code> defined in the BPM process. If the statusCode is not one of this values, it will be sent to the  <code> ??? - Other status code </code> output pin.</p>
+  <p>The output message will have the following attributes:</p>
+  <p><code>payload</code>The result (body response) of the BPM process call. </p>
+  <p><code>statusCode</code>The statusCode of the BPM process call.</p>
+
+</script>
+
+<script type="text/javascript" language="javascript" src="config/onesait-platform-config.js"></script>
+<script type="text/javascript">
+  var auth = getParameterByName('authentication');
+
+  RED.nodes.registerType('Start BPM', {
+    category: 'Onesait Platform BPM',
+    color: '#C0DEED',
+    defaults: {
+      name: { value: "" },
+      bpmProcessName: { value: "" },
+      bpmProcessInputId: { value: "" },
+      bpmProcessMessage: { value: "" },
+      bpmProcessMessageType: { value: "" },
+      bpmProcessInputsLoaded: { value: [] },
+      authentication: { value: auth },
+    },
+    inputs: 1,
+    outputs: 1,
+    outputLabels: function (index) {
+      var inpsLoaded = JSON.parse(this.bpmProcessInputsLoaded);
+      var selectedInputId = this.bpmProcessInputId;
+      var selectedLabel = "";
+      inpsLoaded.forEach(function (input) {
+        if (input.id == selectedInputId) {
+          var keys = Object.keys(input.returnMessagesresponseCodes);
+          selectedLabel = keys[index] + " - " + input.returnMessagesresponseCodes[keys[index]];
+        }
+      });
+      return selectedLabel;
+    },
+    icon: "platform_logo.png",
+    oneditprepare: function () {
+      $("#node-input-bpmProcessMessage").typedInput({
+        type:this.bpmProcessMessageType,
+        types:['str','msg'],
+      })
+      $("#node-input-bpmProcessMessage").typedInput('type',this.bpmProcessMessageType);
+      $("#node-input-bpmProcessMessage").typedInput('hide');
+      $(".bpmProcessMessage-label").hide();  // Hide the label
+    },
+    oneditsave: function () {
+      this.bpmProcessMessageType = $("#node-input-bpmProcessMessage").typedInput('type');
+    },
+    label: function () {
+      var defaultLabel = "onesaitplatform-bpm-start";
+      if (this.bpmProcessName != null && this.bpmProcessInputId != null) {
+        defaultLabel = "Start " + this.bpmProcessName + " BPM Process";
+      }
+      return this.name || defaultLabel;
+    }
+  });
+
+  var insertedInList = false;
+  var bpmProcessNamesList;
+  var bpmProcessInputsData;
+
+  function getParameterByName(name, url) {
+    if (!url) {
+      url = window.location.href;
+    }
+    name = name.replace(/[\[\]]/g, "\\$&");
+    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+      results = regex.exec(url);
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, " "));
+  }
+
+  function loadBPMInputsFromStored() {
+    var bpmProcessInputsList = $("#node-input-bpmProcessInputsLoaded").val();
+    if (bpmProcessInputsList != null && bpmProcessInputsList != "") {
+      $('#node-input-bpmProcessInputIdsList').find('option').remove().end().append('<option value='+""+'>'+""+'</option>');
+      $.each(JSON.parse(bpmProcessInputsList), function (i, item) {
+        var bpmProcessInputId = item.id;
+        var mbpmMessageName = item.name || "no message required";
+        $('#node-input-bpmProcessInputIdsList').append("<option value='"+bpmProcessInputId+"'>"+bpmProcessInputId+' - '+mbpmMessageName+"</option>");
+      });
+    } else {
+      if ($('#node-input-bpmProcessName').val() != null) {
+        loadBPMInputsFromProcess($('#node-input-bpmProcessName').val()); 
+      }
+    }
+  }
+
+  function loadBPMInputsFromProcess(selectedName) {
+    if ($('#node-input-bpmProcessName').val() !== undefined && selectedName != "" && selectedName != null) {
+      var jsonCallbackName7 = 'bpmProcesInputsList';
+      var urlService = onesaitPlatformConfig.scriptBasePath + '/node/services/user/bpm/inputs?bpmProcessName=' + selectedName + '&authentication=';
+      var url = urlService + auth + '&callback=' + jsonCallbackName7;
+
+      $.ajax({
+        url: url,
+        dataType: "jsonp",
+        timeout: onesaitPlatformConfig.onesaitPlatformQueryTimeout,
+        jsonpCallback: jsonCallbackName7,
+        success: function (data, textStatus, jqXHR) {
+          if (textStatus == "success") {
+            bpmProcessInputsData = data;
+            $("#node-input-bpmProcessInputsLoaded").val(JSON.stringify(data));
+            var finishInsert = false;
+            while(finishInsert == false){
+              $('#node-input-bpmProcessInputIdsList').find('option').remove().end().append('<option value='+""+'>'+""+'</option>');
+              $.each(bpmProcessInputsData, function (i, item) {
+                var bpmProcessInputId = item.id;
+                var mbpmMessageName = item.name || "no message required";
+                $('#node-input-bpmProcessInputIdsList').append("<option value='"+bpmProcessInputId+"'>"+bpmProcessInputId+' - '+mbpmMessageName+"</option>");
+              });
+              finishInsert = true;
+            }
+          }
+        },
+        error: function (xhr, status, error) {
+          showErrorDialogStatic();
+        }
+      });
+    }
+  }
+
+  function changeBPMInputsFromList(processName) {
+    loadBPMInputsFromProcess(processName);
+
+    if ($("#node-input-bpmProcessInputId").val() != null && $("#node-input-bpmProcessInputIdsList").val() != "") {
+      $("#node-input-bpmProcessInputIdsList").val($("#node-input-bpmProcessInputId").val());
+    }
+    $("#node-input-bpmProcessInputIdsList").change(function () {
+      if ($('#node-input-bpmProcessInputId').val() != $('#node-input-bpmProcessInputIdsList').val()) {
+        var selection = $('#node-input-bpmProcessInputIdsList').val();
+        $('#node-input-bpmProcessInputId').val(selection);
+        $('input[name=selectedbpmProcessInputId]').val(selection);
+        loadMessageForSelectedInput();
+      }
+    });
+  }
+
+  function loadMessageForSelectedInput() {
+    var selectedInputId = $('#node-input-bpmProcessInputId').val();
+    var inputsLoaded = JSON.parse($("#node-input-bpmProcessInputsLoaded").val());
+    var input = inputsLoaded.find(function(input) { return input.id === selectedInputId; });
+    if (input && input.name) {
+      $("#node-input-bpmProcessMessage").typedInput('show');
+      $(".bpmProcessMessage-label").show();  // Show the label
+    } else {
+      $("#node-input-bpmProcessMessage").typedInput('hide');
+      $("#node-input-bpmProcessMessage").typedInput('value','');
+      $(".bpmProcessMessage-label").hide();  // Hide the label
+    }
+    
+  }
+
+  function obtenerBPMs() {
+    var jsonCallbackName = 'bpmProcessList';
+    var urlService = onesaitPlatformConfig.scriptBasePath + '/node/services/user/bpm/processes?authentication=';
+    var url = urlService + auth + '&callback=' + jsonCallbackName;
+
+    $.ajax({
+      url: url,
+      dataType: "jsonp",
+      timeout: onesaitPlatformConfig.onesaitPlatformQueryTimeout,
+      jsonpCallback: jsonCallbackName,
+      success: function (data, textStatus, jqXHR) {
+        if (textStatus == "success") {
+          //1 LOAD
+          bpmProcessNamesList = data;
+          onElementInserted('body', '#node-input-bpmProcessNamesList', function (element) {
+            while(insertedInList == false){ 
+              $('#node-input-bpmProcessNamesList').append('<option value=' + "" + '>' + "" + '</option>');
+              $.each(bpmProcessNamesList, function (i, item) {
+                $('#node-input-bpmProcessNamesList').append('<option value="' + item.id + '">' + item.name + '</option>');
+              });
+              insertedInList = true; 
+            }
+            // 2 if prev selection was stored, load selected item on list
+            if ($('#node-input-bpmProcessName').val()) {
+              $('#node-input-bpmProcessNamesList').val($('#node-input-bpmProcessName').val());
+            }
+      
+            // 3 load Inputs in case there is a valid process selection
+            loadBPMInputsFromStored();
+
+            // 4 if prev input was stored, load selecd item on list
+            if ($("#node-input-bpmProcessInputId").val()) {
+              $("#node-input-bpmProcessInputIdsList").val($("#node-input-bpmProcessInputId").val());
+              loadMessageForSelectedInput();
+            }
+
+            // ON CHANGE from Names list
+            $('#node-input-bpmProcessNamesList').change(function(){
+              if($('#node-input-bpmProcessName').val() !=  $('#node-input-bpmProcessNamesList').val()){
+                $('input[name=selectedbpmProcessName]').val( $('#node-input-bpmProcessNamesList').val());
+                $('#node-input-bpmProcessName').val($('#node-input-bpmProcessNamesList').val());    
+                $("#node-input-bpmProcessMessage").typedInput('hide');
+                $("#node-input-bpmProcessMessage").typedInput('value','');
+                $('#node-input-bpmProcessInputId').val("")
+                loadBPMInputsFromProcess($('#node-input-bpmProcessName').val());
+              }
+            });
+            
+            // ON CHANGE from process inputs list            
+            $('#node-input-bpmProcessInputIdsList').change(function () {
+              if($('#node-input-bpmProcessInputId').val() != $('#node-input-bpmProcessInputIdsList').val()) {
+                $('input[name=selectedbpmProcessInputId]').val( $('#node-input-bpmProcessInputIdsList').val());
+                $('#node-input-bpmProcessInputId').val( $('#node-input-bpmProcessInputIdsList').val());
+                loadMessageForSelectedInput();
+              }
+            });
+          });
+        }
+      },
+      error: function (xhr, status, error) {
+        if (bpmProcessNamesList) {
+          onElementInserted('body', '#node-input-bpmProcessNamesList', function (element) {
+            if (!insertedLista) {
+              $('#node-input-bpmProcessNamesList').append('<option value=' + "" + '>' + "" + '</option>');
+              $.each(bpmProcessNamesList, function (i, item) {
+                $('#node-input-bpmProcessNamesList').append('<option value="' + item.id + '">' + item.name + '</option>');
+              });
+              insertedLista = true;
+            }
+
+            if ($('#node-input-bpmProcessName').val() != null && $('#node-input-bpmProcessName').val() != "") {
+              $('#node-input-bpmProcessNamesList').val($('#node-input-bpmProcessName').val());
+            }
+            $('#node-input-bpmProcessNamesList').change(function () {
+              if ($('#node-input-bpmProcessName').val() !=  $('#node-input-bpmProcessNamesList').val()) {
+                var bpmProcessName = $('#node-input-bpmProcessNamesList').val();
+                $('#node-input-bpmProcessName').val(bpmProcessName);
+                $('input[name=selectedbpmProcessName]').val(bpmProcessName);
+                changeBPMInputsFromList($('#node-input-bpmProcessName').val());
+              }
+            });
+            //LOAD INPUTS FROM VARIABLE
+            loadBPMInputsFromStored();
+
+            if ($("#node-input-bpmProcessInputId").val() != null && $('#node-input-bpmProcessInputId').val() != "") {
+              $("#node-input-bpmProcessInputIdsList").val($("#node-input-bpmProcessInputId").val());
+              loadMessageForSelectedInput();
+            }
+
+            $('#node-input-bpmProcessInputIdsList').change(function () {
+              if($('#node-input-bpmProcessInputId').val() != $('#node-input-bpmProcessInputIdsList').val()) {
+                $('input[name=selectedbpmProcessInputId]').val( $('#node-input-bpmProcessInputIdsList').val());
+                $('#node-input-bpmProcessInputId').val( $('#node-input-bpmProcessInputIdsList').val());
+                loadMessageForSelectedInput();
+              }
+            });
+
+          });
+        } else {
+          showErrorDialogInsert();
+        }
+      }
+    });
+  }
+  obtenerBPMs();
+</script>
+
+<script type="text/x-red" data-template-name="Start BPM">
+  <div class="form-row">
+      <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="common.label.name"></span></label>
+      <input type="text" id="node-input-name" data-i18n="[placeholder]common.label.name">
+  </div>
+
+  <div class="form-row">
+      <label for="node-input-bpmProcessNamesList"><i class="icon-th-list"></i>BPM Processes available </label>
+      <select id="node-input-bpmProcessNamesList" placeholder="BPM Process Name">
+
+      </select>
+  </div>
+  
+  <div class="form-row">
+      <label for="node-input-bpmProcessInputIdsList"><i class="icon-th-list"></i>BPM Process Inputs Id </label>
+      <select id="node-input-bpmProcessInputIdsList" placeholder="BPM Process Inputs">
+
+      </select>
+  </div>
+  <div class="form-row">
+    <label for="node-input-bpmProcessMessage" class="bpmProcessMessage-label">Input Message</label>
+    <input type="text" id="node-input-bpmProcessMessage">
+    <input type="hidden" id="node-input-bpmProcessMessage-type">
+  </div>
+
+  <div class="form-row">
+    <label for="node-input-bpmProcessName"><i class="icon-tag"></i> BPM Process</label>
+    <input  disabled="disabled" type="text" id="node-input-bpmProcessName" placeholder="BPM Process Name">
+  </div>
+  <div class="form-row">
+    <label for="node-input-bpmProcessInputId"><i class="icon-tag"></i> BPM Process Input Id</label>
+    <input  disabled="disabled" type="text" id="node-input-bpmProcessInputId">
+  </div>
+
+  <input type="hidden" name="selectedbpmProcessName" id="selectedbpmProcessName" value="">
+  <input type="hidden" name="selectedbpmProcessInputId" id="selectedbpmProcessInputId" value="">
+  <input type="hidden" name="node-input-bpmProcessInputsLoaded" id="node-input-bpmProcessInputsLoaded" value="{}">
+
+  
+  <script type="text/javascript">
+        var insertedLista = false;
+        onElementInserted('body', '#node-input-bpmProcessNamesList', function(element) {                  
+
+          while(insertedLista == false){ 
+              $('#node-input-bpmProcessNamesList').append('<option value='+""+'>'+""+'</option>');
+              $.each(bpmProcessNamesList, function (i, item) {
+                  $('#node-input-bpmProcessNamesList').append("<option value='"+item.id+"'>"+item.name+"</option>");
+              });   
+              insertedLista = true; 
+          }
+
+          if( $('#node-input-bpmProcessName').val()!=null &&  $('#node-input-bpmProcessName').val()!=""){
+              $('#node-input-bpmProcessNamesList').val( $('#node-input-bpmProcessName').val() );
+          }
+
+          loadBPMInputsFromStored();
+
+          if ($("#node-input-bpmProcessInputId").val() != null && $('#node-input-bpmProcessInputId').val() != "") {
+              $("#node-input-bpmProcessInputIdsList").val($("#node-input-bpmProcessInputId").val());
+              //loadMessageForSelectedInput();
+          }
+
+          $('#node-input-bpmProcessNamesList').change(function(){
+              if($('#node-input-bpmProcessName').val() !=  $('#node-input-bpmProcessNamesList').val()){
+                              
+                  var finalOperationName = $('#node-input-managementRestApiNamesList').val();
+                  
+                  $('#node-input-bpmProcessName').val(finalOperationName);
+                  $('input[name=selectedmanagementRestApiName]').val(finalOperationName);
+                  //changeOperationsFromListManagement($('#node-input-managementRestApiName').val());
+              }
+          }); 
+        }); 
+  </script>
+
+  
+  <script type="text/x-red" data-help-name="Start BPM">
+    <p>Node for starting the execution of a specific BPM.</p>
+    <p><code>Name</code> It is used to identify the node by a specific name. This is an optional field.</p>
+    <p><code>BPM</code> Name of the BPM diagram to start. If the incoming message has the property <code>msg.bpmIdentification</code> defined, its value will be used instead.</p>
+    <p><code>Parameters</code> Allows sending parameters to the BPM. If the incoming message has the property <code>msg.parameters</code> defined, its value will be used instead.</p>
+    <p>The output message has the following attributes:</p>
+    <p><code>payload</code>The result of the Start command.</p>
+    <p><code>ok</code>A boolean that specifies whether the start command was successfully executed.</p>
+  </script>
+</html>
