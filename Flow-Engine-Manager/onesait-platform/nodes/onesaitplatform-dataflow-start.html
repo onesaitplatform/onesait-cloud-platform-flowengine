@@ -151,14 +151,14 @@
      function obtenerDataflowsUsuario(){
 
      var jsonCallbackName = 'dataflowsStart';
-     var urlService = onesaitPlatformConfig.scriptBasePath + '/flowengine/node/services/user/dataflows?authentication=';
+     var urlService = onesaitPlatformConfig.scriptBasePath + '/node/services/user/dataflows?authentication=';
      var url = urlService + auth + '&callback=' +jsonCallbackName;
      
 
      $.ajax({
         url: url, 
         dataType: "jsonp",
-        timeout: 10000,
+        timeout: onesaitPlatformConfig.onesaitPlatformQueryTimeout,
         jsonpCallback: jsonCallbackName,
         success: function(data, textStatus, jqXHR) {
 

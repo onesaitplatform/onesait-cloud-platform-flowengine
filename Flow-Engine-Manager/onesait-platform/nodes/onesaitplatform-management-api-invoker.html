@@ -189,13 +189,13 @@
     function loadOperationsFromManagementRestApi(selectedName){
         if(selectedName!=""){
             var jsonCallbackName3 = 'managementRestApiOperationsList';
-            var urlService = onesaitPlatformConfig.scriptBasePath + '/flowengine/node/services/user/management/api/rest/operations?apiName='+selectedName+'&authentication=';
+            var urlService = onesaitPlatformConfig.scriptBasePath + '/node/services/user/management/api/rest/operations?apiName='+selectedName+'&authentication=';
             var url = urlService + auth + '&callback=' +jsonCallbackName3;
 
             $.ajax({
                 url: url, 
                 dataType: "jsonp",
-                timeout: 10000,
+                timeout: onesaitPlatformConfig.onesaitPlatformQueryTimeout,
                 jsonpCallback: jsonCallbackName3,
                 success: function(data, textStatus, jqXHR) {
                     if(textStatus == "success"){
@@ -293,14 +293,14 @@
     function getManagementRestApiList(){
 
         var jsonCallbackName4 = 'managedRestApiList';
-        var urlService = onesaitPlatformConfig.scriptBasePath + '/flowengine/node/services/user/management/api/rest?authentication=';
+        var urlService = onesaitPlatformConfig.scriptBasePath + '/node/services/user/management/api/rest?authentication=';
         var url = urlService + auth + '&callback=' +jsonCallbackName4;
      
 
         $.ajax({
             url: url, 
             dataType: "jsonp",
-            timeout: 10000,
+            timeout: onesaitPlatformConfig.onesaitPlatformQueryTimeout,
             jsonpCallback: jsonCallbackName4,
             success: function(data, textStatus, jqXHR) {
 

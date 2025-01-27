@@ -97,20 +97,15 @@
 
      function getMailboxByUser(){
 
-<<<<<<< Updated upstream
-     var jsonCallbackName = 'files';
-     var urlService = onesaitPlatformConfig.scriptBasePath + '/flowengine/node/services/user/files?authentication=';
-=======
      var jsonCallbackName = 'mailboxes';
      var urlService = onesaitPlatformConfig.scriptBasePath + '/node/services/user/mailbox?authentication=';
->>>>>>> Stashed changes
      var url = urlService + auth + '&callback=' +jsonCallbackName;
      
 
      $.ajax({
         url: url, 
         dataType: "jsonp",
-        timeout: 10000,
+        timeout: onesaitPlatformConfig.onesaitPlatformQueryTimeout,
         jsonpCallback: jsonCallbackName,
         success: function(data, textStatus, jqXHR) {
 

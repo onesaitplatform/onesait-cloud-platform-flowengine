@@ -80,13 +80,13 @@
 
      function obtenerOntologiasUsuario(){
       var jsonCallbackName = 'ontologiesStatic';
-     var urlService = onesaitPlatformConfig.scriptBasePath + '/flowengine/node/services/user/ontologies?authentication=';
+     var urlService = onesaitPlatformConfig.scriptBasePath + '/node/services/user/ontologies?authentication=';
      var url = urlService + auth + '&callback=' +jsonCallbackName;
 
      $.ajax({
         url: url, 
         dataType: "jsonp",
-        timeout: 10000,
+        timeout: onesaitPlatformConfig.onesaitPlatformQueryTimeout,
         jsonpCallback: jsonCallbackName,
         success: function(data, textStatus, jqXHR) {
 

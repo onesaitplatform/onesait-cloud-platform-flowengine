@@ -155,14 +155,14 @@
     function getdigitalTwinTypeForActionListForActions(){
 
         var jsonCallbackName = 'digitalTwinTypeForActionListForActions';
-        var urlService = onesaitPlatformConfig.scriptBasePath + '/flowengine/node/services/user/digital_twin_ypes?authentication=';
+        var urlService = onesaitPlatformConfig.scriptBasePath + '/node/services/user/digital_twin_ypes?authentication=';
         var url = urlService + auth + '&callback=' +jsonCallbackName;
      
 
         $.ajax({
             url: url, 
             dataType: "jsonp",
-            timeout: 10000,
+            timeout: onesaitPlatformConfig.onesaitPlatformQueryTimeout,
             jsonpCallback: jsonCallbackName,
             success: function(data, textStatus, jqXHR) {
 
