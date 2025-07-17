@@ -6,8 +6,8 @@
      var auth = getParameterByName('authentication');
 
     RED.nodes.registerType('Start Dataflow',{
-      category: 'Onesait Platform Dataflows',
-      color: '#C0DEED',
+      category: 'Platform Dataflows',
+      color: onesaitPlatformConfig.color,
       defaults: {
         name: {value:""},
         dataflowIdentification: {value:""},
@@ -24,10 +24,11 @@
       },
       inputs: 1,
       outputs:1,
-      icon: "platform_logo.png",
+      icon: onesaitPlatformConfig.icon,
       label: function() {
-        return this.name||"Start Dataflow";
+        return this.name||onesaitPlatformConfig.nodeLabels['Start Dataflow'];
       },
+      paletteLabel: onesaitPlatformConfig.nodeLabels['Start Dataflow'],
        oneditprepare: function() {
         //node-input-parameters-container
         $("#node-input-parameters-container").css('min-height','250px').css('min-width','450px').editableList({

@@ -3,7 +3,7 @@
 	var auth = getParameterByName('authentication');
 		RED.nodes.registerType('onesaitplatform-firebase-notification',{
 			category: 'function',
-			color: '#C0DEED',
+			color: onesaitPlatformConfig.color,
 			defaults: {
 				name: {value:""},
 				projectId: {value:""},
@@ -18,10 +18,11 @@
 			},
 			inputs: 1,
 			outputs:1,
-			icon: "platform_logo.png",
+			icon: onesaitPlatformConfig.icon,
 			label: function() {
-				return this.name||"onesaitplatform-firebase-notification";
+				return this.name||onesaitPlatformConfig.nodeLabels['onesaitplatform-firebase-notification'];
 			},
+			paletteLabel: onesaitPlatformConfig.nodeLabels['onesaitplatform-firebase-notification'],
 			oneditprepare: function() {
 				/*$("#node-input-typed-target").typedInput({default:'msg',types:['msg','str']}).typedInput('value','');
 				//.typedInput({types:['msg', {value:"full",label:RED._("node-red:debug.msgobj"),hasValue:false}]});
@@ -116,7 +117,7 @@
 	</script>
 
 	<script type="text/x-red" data-help-name="onesaitplatform-firebase-notification">
-		<p>This node allows sending native notifications to mobile devices. The node is designed to be attached to the output of the onesait notification endpoint node subscribed with to the notificationMessage ontology, with no other element in between</p>
+		<p>This node allows sending native notifications to mobile devices. The node is designed to be attached to the output of the Platform Notification endpoint node subscribed with to the notificationMessage ontology, with no other element in between</p>
 		<p>Form attributes:</p>
 		<p><code>Name</code> It is used to identity the node by a specific name. 
 		This is an optional field.</p>

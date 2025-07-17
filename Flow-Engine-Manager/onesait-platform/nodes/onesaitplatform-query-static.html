@@ -7,7 +7,7 @@
 
 		RED.nodes.registerType('onesaitplatform-query-static',{
 			category: 'function',
-			color: '#C0DEED',
+			color: onesaitPlatformConfig.color,
 			defaults: {
 				name: {value:""},
 				ontology: {value:"",required:true},
@@ -18,9 +18,20 @@
 			},
 			inputs: 1,
 			outputs:1,
-			icon: "platform_logo.png",
+			icon: onesaitPlatformConfig.icon,
 			label: function() {
-				return this.name||"onesaitplatform-query-static";
+				return this.name||onesaitPlatformConfig.nodeLabels['onesaitplatform-query-static'];
+			},
+			paletteLabel: onesaitPlatformConfig.nodeLabels['onesaitplatform-query-static'],
+			oneditprepare: function() {
+				function capitalizeFirstLetter(val) {
+					return String(val).charAt(0).toUpperCase() + String(val).slice(1);
+				}
+				ontology=onesaitPlatformConfig.ontology;
+				ontologies=onesaitPlatformConfig.ontologies;
+				$( "label[for='node-input-ontologyStatic']").html('<i class="icon-th-list"></i>'+capitalizeFirstLetter(ontologies)+' available');
+				$( "label[for='node-input-ontology']").html('<i class="icon-tag"></i> '+capitalizeFirstLetter(ontology));
+				$("input#node-input-ontology").attr("placeholder",capitalizeFirstLetter(ontology));
 			}
 		});
 
@@ -188,7 +199,7 @@
 			<input type="text" id="node-input-name" placeholder="Name">
 		</div>
 		<div class="form-row">
-			<label for="node-input-ontologyStatic"><i class="icon-th-list"></i>Ontologies available </label>
+			<label for="node-input-ontologyStatic"><i class="icon-th-list"></i>Ontologies available"</label>
 			<select id="node-input-ontologyStatic" placeholder="Ontology">
 				
 			</select>

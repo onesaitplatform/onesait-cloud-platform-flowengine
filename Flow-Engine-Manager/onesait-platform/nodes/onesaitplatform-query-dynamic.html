@@ -3,17 +3,18 @@
 	var auth = getParameterByName('authentication');
 		RED.nodes.registerType('onesaitplatform-query-dynamic',{
 			category: 'function',
-			color: '#C0DEED',
+			color: onesaitPlatformConfig.color,
 			defaults: {
 				name: {value:""},
 				authentication: {value: auth}
 			},
 			inputs: 1,
 			outputs:1,
-			icon: "platform_logo.png",
+			icon: onesaitPlatformConfig.icon,
 			label: function() {
-				return this.name||"onesaitplatform-query-dynamic";
-			}
+				return this.name||onesaitPlatformConfig.nodeLabels['onesaitplatform-query-dynamic'];
+			},
+			paletteLabel: onesaitPlatformConfig.nodeLabels['onesaitplatform-query-dynamic']
 		});
 	 function getParameterByName(name, url) {
      	

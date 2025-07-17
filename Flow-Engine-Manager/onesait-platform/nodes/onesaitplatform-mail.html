@@ -7,7 +7,7 @@
 
     RED.nodes.registerType('onesaitplatform-mail',{
       category: 'function',
-      color: '#C0DEED',
+      color: onesaitPlatformConfig.color,
       defaults: {
         name: {value:""},
 		to: {value:""},
@@ -21,10 +21,11 @@
       },
       inputs: 1,
       outputs:1,
-      icon: "platform_logo.png",
+      icon: onesaitPlatformConfig.icon,
       label: function() {
-        return this.name||"onesaitplatform-mail";
+        return this.name||onesaitPlatformConfig.nodeLabels['onesaitplatform-mail'];
       },
+      paletteLabel: onesaitPlatformConfig.nodeLabels['onesaitplatform-mail'],
 	  oneditprepare: function() {
 		function updateMailboxOptions() {
 			if ($("#node-input-mailboxDefault").is(":checked")) {

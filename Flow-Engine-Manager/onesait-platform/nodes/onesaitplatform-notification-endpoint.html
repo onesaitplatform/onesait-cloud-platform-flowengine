@@ -6,7 +6,7 @@
     var auth = getParameterByName('authentication');
     RED.nodes.registerType('onesaitplatform-notification-endpoint',{
         category: 'input',
-        color: '#C0DEED',
+        color: onesaitPlatformConfig.color,
         defaults: {
             name: {value:""},
             url: {value:"",required:true},
@@ -21,14 +21,15 @@
         inputs:0,
         outputs:1,
         outputLabels: ["Notification","Retried notification"],
-        icon: "platform_logo.png",
+        icon: onesaitPlatformConfig.icon,
         label: function() {
             if (this.name) {
                 return this.name;
             } else {
-                return "OnesaitPlatform Notification";
+                return onesaitPlatformConfig.nodeLabels['onesaitplatform-notification-endpoint']
             }
         },
+        paletteLabel: onesaitPlatformConfig.nodeLabels['onesaitplatform-notification-endpoint'],
         labelStyle: function() {
             return this.name?"node_label_italic":"";
         },
@@ -43,6 +44,14 @@
                 $("#node-input-path").html(root);
                 $("#node-input-tip").show();
             }
+            function capitalizeFirstLetter(val) {
+                return String(val).charAt(0).toUpperCase() + String(val).slice(1);
+            }
+            ontology=onesaitPlatformConfig.ontology;
+            ontologies=onesaitPlatformConfig.ontologies;
+            $( "label[for='node-input-ontologyNotif']").html('<i class="icon-th-list"></i>'+capitalizeFirstLetter(ontologies)+' available');
+            $( "label[for='node-input-ontology']").html('<i class="icon-tag"></i> '+capitalizeFirstLetter(ontology));
+            $("input#node-input-ontology").attr("placeholder",capitalizeFirstLetter(ontology));
 
         },
     		oneditsave: function() {
@@ -282,7 +291,7 @@
 
       <input type="hidden" name="selectontologyNotif" value="">
 
-    <div id="node-input-tip" class="form-tips">OnesaitPlatform Notification</span><code><span id="node-input-path"></span></code>.</div>
+    <div id="node-input-tip" class="form-tips">Platform Notification</span><code><span id="node-input-path"></span></code>.</div>
 
 <script type="text/javascript">
         
@@ -323,7 +332,7 @@
   </script>
 
 <script type="text/x-red" data-help-name="onesaitplatform-notification-endpoint">
-    <p>Provides an input node for onesaitPlatform notifications.</p>
+    <p>Provides an input node for Platform notifications.</p>
     <p>The resulting message has the following properties on msg.payload:
         <ul>
             <li>msg.payload. : </li>

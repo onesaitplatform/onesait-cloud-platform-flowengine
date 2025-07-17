@@ -27,8 +27,8 @@
   var auth = getParameterByName('authentication');
 
   RED.nodes.registerType('Start BPM', {
-    category: 'Onesait Platform BPM',
-    color: '#C0DEED',
+    category: 'Platform BPM',
+    color: onesaitPlatformConfig.color,
     defaults: {
       name: { value: "" },
       bpmProcessName: { value: "" },
@@ -52,7 +52,7 @@
       });
       return selectedLabel;
     },
-    icon: "platform_logo.png",
+    icon: onesaitPlatformConfig.icon,
     oneditprepare: function () {
       $("#node-input-bpmProcessMessage").typedInput({
         type:this.bpmProcessMessageType,
@@ -66,12 +66,13 @@
       this.bpmProcessMessageType = $("#node-input-bpmProcessMessage").typedInput('type');
     },
     label: function () {
-      var defaultLabel = "onesaitplatform-bpm-start";
+      var defaultLabel = onesaitPlatformConfig.nodeLabels["onesaitplatform-bpm-start"];
       if (this.bpmProcessName != null && this.bpmProcessInputId != null) {
         defaultLabel = "Start " + this.bpmProcessName + " BPM Process";
       }
       return this.name || defaultLabel;
-    }
+    },
+    paletteLabel: onesaitPlatformConfig.nodeLabels['onesaitplatform-mail']
   });
 
   var insertedInList = false;

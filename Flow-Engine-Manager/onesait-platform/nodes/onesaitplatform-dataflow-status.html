@@ -6,8 +6,8 @@
      var auth = getParameterByName('authentication');
 
     RED.nodes.registerType('Check Dataflow Status',{
-      category: 'Onesait Platform Dataflows',
-      color: '#C0DEED',
+      category: 'Platform Dataflows',
+      color: onesaitPlatformConfig.color,
       defaults: {
         name: {value:""},
         dataflowIdentification: {value:""},
@@ -34,10 +34,11 @@
             } 
             return selectedLabel;
         },
-      icon: "platform_logo.png",
+      icon: onesaitPlatformConfig.icon,
       label: function() {
-        return this.name||"Check Dataflow Status";
+        return this.name||onesaitPlatformConfig.nodeLabels['Check Dataflow Status'];
       },
+      paletteLabel: onesaitPlatformConfig.nodeLabels['Check Dataflow Status'],
        oneditprepare: function() {
          $("#inject-time-type-select").change(function() {
                 $("#node-input-crontab").val('');

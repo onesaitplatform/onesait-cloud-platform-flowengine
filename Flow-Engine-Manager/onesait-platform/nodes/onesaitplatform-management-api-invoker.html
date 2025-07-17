@@ -5,7 +5,7 @@
 
 
 <script type="text/x-red" data-help-name="onesaitplatform-management-Rest-API-invoker">
-    <p>Node that invokes Onesait Platform management Rest API operation.</p>
+    <p>Node that invokes Platform management Rest API operation.</p>
     <p><code>Name</code> It is used to identity the node by a specific name. 
     This is an optional field.</p>
 
@@ -29,7 +29,7 @@
     var auth = getParameterByName('authentication');
     var prevLoadedParams = [];
     RED.nodes.registerType('onesaitplatform-management-Rest-API-invoker',{
-        color: '#C0DEED',
+        color: onesaitPlatformConfig.color,
         category: 'function',
         defaults: {
             name: {value:""},
@@ -63,7 +63,7 @@
             });
             return selectedLabel;
         },
-        icon: "platform_logo.png",
+        icon: onesaitPlatformConfig.icon,
 
         oneditprepare: function() {
             $("#node-input-managementOperationInputs-container").css('min-height','250px').css('min-width','450px').editableList({
@@ -140,12 +140,13 @@
             
         },
 		label: function() {
-            var defaultLabel= "onesaitplatform-digitaltwin-action";
+            var defaultLabel= onesaitPlatformConfig.nodeLabels['onesaitplatform-management-Rest-API-invoker'];
             if(this.managementRestApiName != null && this.managementRestApiOperationName != null){
                 defaultLabel = this.managementRestApiName +" - Invoke Operation";
             }
 			return this.name||defaultLabel;
-		}
+		},
+        paletteLabel: onesaitPlatformConfig.nodeLabels['onesaitplatform-management-Rest-API-invoker']
     });
     
     var managementRestApiNamesList;

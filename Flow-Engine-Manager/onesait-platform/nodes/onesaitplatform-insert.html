@@ -7,7 +7,7 @@
 
     RED.nodes.registerType('onesaitplatform-insert',{
       category: 'function',
-      color: '#C0DEED',
+      color: onesaitPlatformConfig.color,
       defaults: {
         name: {value:""},
         ontology: {value:""},
@@ -15,9 +15,20 @@
       },
       inputs: 1,
       outputs:1,
-      icon: "platform_logo.png",
+      icon: onesaitPlatformConfig.icon,
       label: function() {
-        return this.name||"onesaitplatform-insert";
+        return this.name||onesaitPlatformConfig.nodeLabels['onesaitplatform-insert'];
+      },
+      paletteLabel: onesaitPlatformConfig.nodeLabels['onesaitplatform-insert'],
+      oneditprepare: function() {
+          function capitalizeFirstLetter(val) {
+              return String(val).charAt(0).toUpperCase() + String(val).slice(1);
+          }
+          ontology=onesaitPlatformConfig.ontology;
+          ontologies=onesaitPlatformConfig.ontologies;
+          $( "label[for='node-input-ontologyInsert']").html('<i class="icon-th-list"></i>'+capitalizeFirstLetter(ontologies)+' available');
+          $( "label[for='node-input-ontology']").html('<i class="icon-tag"></i> '+capitalizeFirstLetter(ontology));
+          $("input#node-input-ontology").attr("placeholder",capitalizeFirstLetter(ontology));
       }
     });
 

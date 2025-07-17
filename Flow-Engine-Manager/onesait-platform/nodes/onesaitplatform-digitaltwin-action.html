@@ -75,7 +75,7 @@
     <p><code>Digital Twin Types available</code>  Selection of Digital Twin types availables in the platform. The selection will be saved in the field <code>Digital Twin Type</code></p>
     <p><code>Digital Twin actions available</code>  Selection of actions defined for the selected Digital Twin Type. The selection will be saved in the field <code>Digital Twin action</code></p>
 
-    <p>The output should always be linked to a <code>onesaitplatform digitaltwin</code> node and the message has the following attributes:</p>
+    <p>The output should always be linked to a <code>Platform Digital Twin</code> node and the message has the following attributes:</p>
     <p><code>payload</code>The data sent to the Digital Twin </p>
 
 </script>
@@ -84,7 +84,7 @@
 <script type="text/javascript" >
     var auth = getParameterByName('authentication');
     RED.nodes.registerType('onesaitplatform-digitaltwin-action',{
-        color: '#C0DEED',
+        color: onesaitPlatformConfig.color,
         category: 'function',
         defaults: {
             name: {value:""},
@@ -96,14 +96,15 @@
         },
         inputs:1,
         outputs:1,
-        icon: "platform_logo.png",
+        icon: onesaitPlatformConfig.icon,
 		label: function() {
-            var defaultLabel= "onesaitplatform-digitaltwin-action";
+            var defaultLabel= onesaitPlatformConfig.nodeLabels['onesaitplatform-digitaltwin-action'];
             if(this.digitalTwinType != null && this.digitalTwinAction != null){
                 defaultLabel = this.digitalTwinType +" "+this.digitalTwinAction+ " - Action";
             }
 			return this.name||defaultLabel;
-		}
+		},
+        paletteLabel: onesaitPlatformConfig.nodeLabels['onesaitplatform-digitaltwin-action'],
     });
     
     var digitalTwinTypesList;

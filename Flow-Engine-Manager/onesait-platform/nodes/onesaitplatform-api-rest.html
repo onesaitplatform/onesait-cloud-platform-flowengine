@@ -7,7 +7,7 @@
 
     RED.nodes.registerType('onesaitplatform api rest',{
       category: 'input',
-      color: '#C0DEED',
+      color: onesaitPlatformConfig.color,
       defaults: {
         name: {value:""},
         description: {value:""},
@@ -18,10 +18,11 @@
       },
       inputs: 0,
       outputs:1,
-      icon: "platform_logo.png",
+      icon: onesaitPlatformConfig.icon,
       label: function() {
-        return this.name||"onesaitplatform api rest";
-      }
+        return this.name||onesaitPlatformConfig.nodeLabels['onesaitplatform api rest'];
+      },
+      paletteLabel: onesaitPlatformConfig.nodeLabels['onesaitplatform api rest'],
     });
 
   function showErrorDialogInsert() {

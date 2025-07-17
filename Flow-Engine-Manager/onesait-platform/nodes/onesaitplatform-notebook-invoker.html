@@ -5,7 +5,7 @@
 			<label for="node-input-notebookname" style="width: 130px;"><i class="fa fa-tag"></i> Name</label>
 			<input style="width:390px" type="text" id="node-input-notebookname"/>
 			<br/><br/>
-			<label for="node-input-topic" style="width: 130px;"><i class="fa fa-book"></i> Onesait Platform Notebook</label>
+			<label for="node-input-topic" style="width: 130px;"><i class="fa fa-book"></i>Platform Notebook</label>
 			<select style="width:390px" id="node-input-notebook">
 			</select>
 			<input type="hidden" id="node-input-notebookint"/>
@@ -73,12 +73,12 @@
 	</script>
 
 	<script type="text/x-red" data-help-name="Notebook Launcher">
-	   <span><img style="margin-left: 5px;" src="icons/platform_logo.png"/><h2 style="display:inline"> Onesait Platform Notebook Launcher</h2>
-	   <p><code>Onesait Platform Notebook</code> Selection of user notebook.</p>
-	   <p><code>Workflow mode</code> If activated, execute the node waiting for all Onesait Platform notebook inputs.</p>
-	   <p><code>Timeout</code> Timeout in seconds of Onesait Platform notebook from node input paragraph to execution complete. If timeout is reach Onesait Platform notebook execution will be stopped and no output will be send</p>
+	   <span><img style="margin-left: 5px;" src="icons/platform_logo.png"/><h2 style="display:inline"> Platform Notebook Launcher</h2>
+	   <p><code>Platform Notebook</code> Selection of user notebook.</p>
+	   <p><code>Workflow mode</code> If activated, execute the node waiting for all Platform notebook inputs.</p>
+	   <p><code>Timeout</code> Timeout in seconds of Platform notebook from node input paragraph to execution complete. If timeout is reach Platform notebook execution will be stopped and no output will be send</p>
 	   <h3>Inputs & Execution</h3>
-	   <p><code>Input Paragraph selection</code> Optional selection of input paragraph of Onesait Platform notebook. The input paragraph will be executed before the entire notebook to set its parameters</p>
+	   <p><code>Input Paragraph selection</code> Optional selection of input paragraph of Platform notebook. The input paragraph will be executed before the entire notebook to set its parameters</p>
 	   <p><code>Input Parameters mapping</code> When a parameter paragraph is selected, all its input fields will be listed here. Each input field can have one of these input type:<br/>
 	   <ul>
 			<li><code>msg</code> Message of previous node. The input text field is the key in the message to set. Example: payload --> msg.payload</li>
@@ -93,9 +93,9 @@
 	   <p><code>Execute entire notebook</code>If activated, execute the entire notebook after input paragraph.</p>
 	   <h3>Outputs</h3>
 	   <p><code>Enable Paragraph Output</code> If activated, output of notebook is enabled. </p>
-	   <p><code>Outputs Number</code> Number of paragraph outputs that the Onesait Platform notebook execution will have. </p>
+	   <p><code>Outputs Number</code> Number of paragraph outputs that the Platform notebook execution will have. </p>
 	   <p><code>Split Outputs</code> If activated, outputs of notebook are splitted to diferent output channel. If not activated, outputs are sending through the same channel sorted</p>
-	   <p><code>Output Parameters mapping</code> List of Onesait Platform notebook outputs (depending directly of Outputs number), each output will be determinated for a paragraph and a topic. </p>
+	   <p><code>Output Parameters mapping</code> List of Platform notebook outputs (depending directly of Outputs number), each output will be determinated for a paragraph and a topic. </p>
 	   
 	</script>
 	<script type="text/javascript" src="config/onesait-platform-config.js"></script>
@@ -125,11 +125,12 @@
 				return JSON.parse(this.outputparameters)[i].paragraphDesc;
 				//return this.id+" output #"+i;
 			},
-			icon: "platform_logo.png",
-			color: '#C0DEED',
+			icon: onesaitPlatformConfig.icon,
+			color: onesaitPlatformConfig.color,
 			label: function() { 
 				return "Notebook: " + this.notebookname||"Notebook: Not selected";
 			},
+			paletteLabel: onesaitPlatformConfig.nodeLabels['Notebook Launcher'],
 			labelStyle: function() {
 				return this.notebook?"node_label_italic":"";
 			},

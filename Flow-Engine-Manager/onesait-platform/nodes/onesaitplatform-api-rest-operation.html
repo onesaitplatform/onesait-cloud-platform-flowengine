@@ -71,7 +71,7 @@
         <dd>For a GET request, contains an object of any query string parameters.
             Otherwise, contains the body of the HTTP request.</dd>
         <dt>req<span class="property-type">object</span></dt>
-        <dd>An onesaitplatform api rest operation object. This object contains multiple properties that
+        <dd>A Platform rest API operation object. This object contains multiple properties that
             provide information about the request.
             <ul>
              <li><code>body</code> - the body of the incoming request. The format
@@ -100,7 +100,7 @@
        any appropriate type. For example, <code>application/json</code> will be parsed to
        its JavaScript object representation.</p>
     <p><b>Note:</b> this node does not send any response to the request. The flow
-       must include an onesaitplatform api rest operation response node to complete the request.</p>
+       must include a Platform Rest API operation response node to complete the request.</p>
 </script>
 
 <script type="text/x-red" data-template-name="onesaitplatform api rest operation response">
@@ -170,8 +170,8 @@ msg.cookies = {
 (function() {
     RED.nodes.registerType('onesaitplatform api rest operation',{
         category: 'input',
-        color: '#C0DEED',
-        icon: "platform_logo.png",
+        color: onesaitPlatformConfig.color,
+        icon: onesaitPlatformConfig.icon,
         defaults: {
             name: {value:""},
             description: {value:""},
@@ -209,9 +209,10 @@ msg.cookies = {
                 }
                 return "["+this.method+"] "+root;
             } else {
-                return "onesaitplatform api rest operation";
+                return onesaitPlatformConfig.nodeLabels['onesaitplatform api rest operation'];
             }
         },
+        paletteLabel: onesaitPlatformConfig.nodeLabels['onesaitplatform api rest operation'],
         labelStyle: function() {
             return this.name?"node_label_italic":"";
         },
@@ -356,9 +357,8 @@ msg.cookies = {
     RED.nodes.registerType('onesaitplatform api rest operation response',{
         category: 'output',
 
-        color: '#C0DEED',
-
-        icon: "platform_logo.png",
+        color: onesaitPlatformConfig.color,
+        icon: onesaitPlatformConfig.icon,
 
         defaults: {
             name: {value:""},
@@ -369,8 +369,9 @@ msg.cookies = {
         outputs:0,
         align: "right",
         label: function() {
-            return this.name||("onesaitplatform api rest operation response"+(this.statusCode?" ("+this.statusCode+")":""));
+            return this.name||(onesaitPlatformConfig.nodeLabels['onesaitplatform api rest operation response']+(this.statusCode?" ("+this.statusCode+")":""));
         },
+        paletteLabel: onesaitPlatformConfig.nodeLabels['onesaitplatform api rest operation response'],
         labelStyle: function() {
             return this.name?"node_label_italic":"";
         },
